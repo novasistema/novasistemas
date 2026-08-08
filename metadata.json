@@ -1,0 +1,5 @@
+{
+  "name": "NovaSistema - Gestión de Ventas",
+  "description": "Sistema moderno de gestión de clientes, productos y ventas con persistencia local.",
+  "requestFramePermissions": []
+}
