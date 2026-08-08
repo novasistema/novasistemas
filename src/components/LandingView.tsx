@@ -146,18 +146,34 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
           >
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-orange/10 text-brand-orange text-xs font-bold mb-6">
               <Sparkles size={14} />
-              <span>Desarrollo de Software & Aplicaciones</span>
+              <span>Desarrollo de Software & Aplicaciones A Medida</span>
             </div>
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-neutral-900">
-              Sistemas <span className="text-brand-orange">Digitales</span> para un mundo moderno.
+            <h1 className="text-4xl sm:text-6xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] text-neutral-900">
+              Creamos sistemas <span className="text-brand-orange">a medida</span> para lo que necesites.
             </h1>
-            <p className="mt-4 sm:mt-6 text-base sm:text-xl text-neutral-500 max-w-lg leading-relaxed">
-              Desarrollamos aplicaciones empresariales y soluciones personales a medida. Potencia tu negocio con tecnología de vanguardia.
+            <p className="mt-4 sm:mt-6 text-base sm:text-xl text-neutral-600 max-w-xl leading-relaxed">
+              <strong>Nos adaptamos 100% a vos.</strong> Si tienes un negocio, una idea o un proceso que quieras automatizar, diseñamos la solución informática perfecta según tus reglas de trabajo.
             </p>
+
+            <div className="mt-6 space-y-2.5">
+              <div className="flex items-center gap-2.5 text-sm font-semibold text-neutral-800">
+                <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+                <span>Soluciones adaptadas exactamente a tu ritmo y presupuesto</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-sm font-semibold text-neutral-800">
+                <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+                <span>Aplicaciones Web, Móviles y Gestión Empresarial</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-sm font-semibold text-neutral-800">
+                <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+                <span>Acompañamiento, soporte constante y capacitaciones</span>
+              </div>
+            </div>
+
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <button onClick={handleContactWhatsApp} className="btn-primary px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg justify-center shadow-xl shadow-brand-orange/20">
                 <MessageCircle size={20} />
-                Empezar Proyecto
+                Consultar Desarrollo A Medida
               </button>
               <button onClick={scrollToPortfolio} className="btn-secondary px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg justify-center">
                 <Layers size={20} />
@@ -167,38 +183,51 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
           </motion.div>
 
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative hidden sm:block"
           >
-            <div className="aspect-square bg-brand-orange/5 rounded-[40px] flex items-center justify-center p-8 lg:p-12">
-              <div className="w-full h-full glass-card p-6 sm:p-8 flex flex-col gap-6 shadow-2xl bg-white/90">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-brand-orange rounded-xl flex items-center justify-center text-white shadow-md">
-                    <LayoutDashboard size={24} />
+            <div className="aspect-square bg-gradient-to-br from-brand-orange/10 via-orange-500/5 to-transparent rounded-[40px] flex items-center justify-center p-8 lg:p-10 border border-brand-orange/10">
+              <div className="w-full h-full glass-card p-6 sm:p-8 flex flex-col justify-between shadow-2xl bg-white/95 border border-neutral-200/80 rounded-3xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-brand-orange rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-orange/30">
+                      <Sparkles size={24} />
+                    </div>
+                    <div>
+                      <div className="text-base font-extrabold text-neutral-900">Proyecto A Medida</div>
+                      <div className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Nos adaptamos a tu necesidad
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="h-4 w-32 bg-neutral-200 rounded-full mb-2" />
-                    <div className="h-3 w-20 bg-neutral-100 rounded-full" />
+                  <span className="px-3 py-1 bg-brand-orange/10 text-brand-orange text-xs font-bold rounded-full">
+                    Nova AJ
+                  </span>
+                </div>
+
+                <div className="space-y-3 my-4">
+                  <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-100 flex items-center justify-between">
+                    <span className="text-xs font-bold text-neutral-700">1. Analizamos tu proyecto</span>
+                    <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-neutral-200 font-semibold text-neutral-500">100% Personalizado</span>
+                  </div>
+                  <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-100 flex items-center justify-between">
+                    <span className="text-xs font-bold text-neutral-700">2. Diseñamos el sistema a medida</span>
+                    <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-neutral-200 font-semibold text-neutral-500">Web & Móvil</span>
+                  </div>
+                  <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-100 flex items-center justify-between">
+                    <span className="text-xs font-bold text-neutral-700">3. Implementación y soporte</span>
+                    <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-neutral-200 font-semibold text-neutral-500">Acompañamiento</span>
                   </div>
                 </div>
-                <div className="flex-1 grid grid-cols-2 gap-4">
-                  <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-4 space-y-2">
-                    <div className="h-3 w-12 bg-emerald-200 rounded-full" />
-                    <div className="h-5 w-20 bg-neutral-800 rounded-full" />
-                  </div>
-                  <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-4 space-y-2">
-                    <div className="h-3 w-12 bg-brand-orange/30 rounded-full" />
-                    <div className="h-5 w-16 bg-neutral-800 rounded-full" />
-                  </div>
-                  <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-4 col-span-2 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="h-3 w-24 bg-neutral-200 rounded-full" />
-                      <div className="h-4 w-36 bg-neutral-700 rounded-full" />
-                    </div>
-                    <div className="w-8 h-8 bg-brand-orange/10 rounded-lg" />
-                  </div>
+
+                <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+                  <span className="font-semibold text-neutral-700">¿Tienes una idea en mente?</span>
+                  <button onClick={handleContactWhatsApp} className="text-brand-orange font-bold hover:underline flex items-center gap-1">
+                    Cotizar gratis &rarr;
+                  </button>
                 </div>
               </div>
             </div>
@@ -233,9 +262,16 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
                     <span className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-full text-xs font-bold">
                       {app.category}
                     </span>
-                    <span className="text-lg font-extrabold text-neutral-900">
-                      ${app.price.toLocaleString()}
-                    </span>
+                    <div className="text-right">
+                      <div className="text-lg font-extrabold text-neutral-900">
+                        ${app.price.toLocaleString()}
+                      </div>
+                      {app.hasSubscription && app.subscriptionPrice ? (
+                        <div className="text-[11px] font-bold text-brand-orange bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-md mt-0.5">
+                          + ${app.subscriptionPrice.toLocaleString()} / {app.subscriptionPeriod || 'Mensual'}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
 
                   <h3 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-3">
@@ -251,6 +287,12 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
                       <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                       <span>Acceso multiplataforma (Celular, Tablet y PC)</span>
                     </div>
+                    {app.hasSubscription && app.subscriptionPrice ? (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-brand-orange">
+                        <CheckCircle2 size={16} className="text-brand-orange shrink-0" />
+                        <span>Mantenimiento / Suscripción: ${app.subscriptionPrice.toLocaleString()} ({app.subscriptionPeriod || 'Mensual'})</span>
+                      </div>
+                    ) : null}
                     <div className="flex items-center gap-2 text-xs font-medium text-neutral-600">
                       <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                       <span>Soporte personalizado e implementación</span>

@@ -55,12 +55,19 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    storageService.seed();
-    setClients(storageService.getClients());
-    setProducts(storageService.getProducts());
-    setSales(storageService.getSales());
-    setBanners(storageService.getBanners());
-    setSubscriptions(storageService.getSubscriptions());
+    const unsubProducts = storageService.subscribeProducts(setProducts);
+    const unsubClients = storageService.subscribeClients(setClients);
+    const unsubSales = storageService.subscribeSales(setSales);
+    const unsubBanners = storageService.subscribeBanners(setBanners);
+    const unsubSubs = storageService.subscribeSubscriptions(setSubscriptions);
+
+    return () => {
+      unsubProducts();
+      unsubClients();
+      unsubSales();
+      unsubBanners();
+      unsubSubs();
+    };
   }, []);
 
   // --- Handlers ---
@@ -102,6 +109,7 @@ export default function App() {
   const handleAddProduct = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const hasSub = formData.get('hasSubscription') === 'on' || formData.get('hasSubscription') === 'true';
     const newProduct: Product = {
       id: editingProduct?.id || Date.now().toString(),
       name: formData.get('name') as string,
@@ -112,6 +120,9 @@ export default function App() {
       description: (formData.get('description') as string || '').trim(),
       demoUrl: (formData.get('demoUrl') as string || '').trim(),
       inPortfolio: formData.get('inPortfolio') === 'on' || formData.get('inPortfolio') === 'true',
+      hasSubscription: hasSub,
+      subscriptionPrice: hasSub ? Number(formData.get('subscriptionPrice') || 0) : undefined,
+      subscriptionPeriod: hasSub ? (formData.get('subscriptionPeriod') as any || 'Mensual') : undefined,
     };
 
     let updatedProducts;

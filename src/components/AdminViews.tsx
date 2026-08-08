@@ -314,7 +314,16 @@ export const ProductsView = ({
                       {product.inPortfolio !== false ? 'Visible en Web' : 'Oculto'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-neutral-900">${product.price.toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-neutral-900">${product.price.toLocaleString()}</div>
+                    {product.hasSubscription && product.subscriptionPrice ? (
+                      <div className="text-[11px] font-medium text-brand-orange mt-0.5">
+                        +${product.subscriptionPrice.toLocaleString()} / {product.subscriptionPeriod || 'Mensual'}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-neutral-400">Sin suscripción</div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button 

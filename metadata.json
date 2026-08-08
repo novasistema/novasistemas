@@ -1,5 +1,8 @@
 {
-  "name": "NovaSistema - Gestión de Ventas",
-  "description": "Sistema moderno de gestión de clientes, productos y ventas con persistencia local.",
-  "requestFramePermissions": []
+  "name": "Nova AJ - sistemas integrales",
+  "description": "Plataforma de gestión de aplicaciones, servicios, portafolio y administración de clientes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

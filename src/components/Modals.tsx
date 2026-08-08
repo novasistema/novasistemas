@@ -67,6 +67,16 @@ interface ProductModalProps {
 }
 
 export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: ProductModalProps) => {
+  const [hasSub, setHasSub] = React.useState<boolean>(editingProduct?.hasSubscription || false);
+
+  React.useEffect(() => {
+    if (editingProduct) {
+      setHasSub(editingProduct.hasSubscription || false);
+    } else {
+      setHasSub(false);
+    }
+  }, [editingProduct, isOpen]);
+
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -116,7 +126,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Precio ($)</label>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">Precio Venta ($)</label>
               <input name="price" type="number" defaultValue={editingProduct?.price} required className="input-field" placeholder="0.00" />
             </div>
             <div>
@@ -124,7 +134,57 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
               <input name="stock" type="number" defaultValue={editingProduct?.stock ?? 99} required className="input-field" placeholder="99" />
             </div>
           </div>
-          <div className="flex items-center gap-2 pt-2">
+
+          {/* Subscription Checkbox and Fields */}
+          <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100 space-y-3">
+            <div className="flex items-center gap-2">
+              <input 
+                type="checkbox" 
+                id="hasSubscription" 
+                name="hasSubscription" 
+                checked={hasSub}
+                onChange={(e) => setHasSub(e.target.checked)}
+                className="w-4 h-4 text-brand-orange rounded border-neutral-300 focus:ring-brand-orange"
+              />
+              <label htmlFor="hasSubscription" className="text-sm font-bold text-neutral-800">
+                ¿Incluye Suscripción / Mantenimiento?
+              </label>
+            </div>
+
+            {hasSub && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-200/60"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">Precio Suscripción ($)</label>
+                  <input 
+                    name="subscriptionPrice" 
+                    type="number" 
+                    defaultValue={editingProduct?.subscriptionPrice || 0} 
+                    required={hasSub}
+                    className="input-field py-1.5 text-sm" 
+                    placeholder="Ej: 5000" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">Periodo de Cobro</label>
+                  <select 
+                    name="subscriptionPeriod" 
+                    defaultValue={editingProduct?.subscriptionPeriod || 'Mensual'} 
+                    className="input-field py-1.5 text-sm bg-white"
+                  >
+                    <option value="Mensual">Mensual</option>
+                    <option value="Semestral">Semestral</option>
+                    <option value="Anual">Anual</option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
             <input 
               type="checkbox" 
               id="inPortfolio" 

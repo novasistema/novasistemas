@@ -26,6 +26,9 @@ export interface Product {
   description?: string;
   demoUrl?: string;
   inPortfolio?: boolean;
+  hasSubscription?: boolean;
+  subscriptionPrice?: number;
+  subscriptionPeriod?: 'Mensual' | 'Anual' | 'Semestral';
 }
 
 export interface SaleItem {
