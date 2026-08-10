@@ -454,6 +454,7 @@ export default function App() {
           onSubmit={handleAddSubscription}
           editingSubscription={editingSubscription}
           clients={clients}
+          products={products}
         />
         <InvoiceModal 
           isOpen={isInvoiceModalOpen} 

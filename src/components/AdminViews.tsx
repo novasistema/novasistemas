@@ -79,8 +79,8 @@ export const DashboardView = ({ sales = [], clients = [], products = [], setView
             </button>
           </div>
           <div className="space-y-4">
-            {(sales || []).slice(0, 5).map(sale => (
-              <div key={sale.id} className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+            {(sales || []).slice(0, 5).map((sale, idx) => (
+              <div key={`${sale.id}-${idx}`} className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-brand-orange border border-neutral-100">
                     <ShoppingCart size={20} />
@@ -100,8 +100,8 @@ export const DashboardView = ({ sales = [], clients = [], products = [], setView
         <div className="glass-card p-6">
           <h3 className="font-bold text-lg mb-6">Clientes y Sistemas</h3>
           <div className="space-y-4">
-            {(clients || []).slice(0, 5).map(client => (
-              <div key={client.id} className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+            {(clients || []).slice(0, 5).map((client, idx) => (
+              <div key={`${client.id}-${idx}`} className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-brand-orange border border-neutral-100">
                     <Users size={20} />
@@ -182,8 +182,8 @@ export const ClientsView = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {filtered.map(client => (
-                <tr key={client.id} className="hover:bg-neutral-50/50 transition-colors">
+              {filtered.map((client, idx) => (
+                <tr key={`${client.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium">{client.name}</div>
                     <div className="text-xs text-neutral-400">{client.email}</div>
@@ -291,8 +291,8 @@ export const ProductsView = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {filtered.map(product => (
-                <tr key={product.id} className="hover:bg-neutral-50/50 transition-colors">
+              {filtered.map((product, idx) => (
+                <tr key={`${product.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-bold text-neutral-900">{product.name}</div>
                     {product.description && (
@@ -394,8 +394,8 @@ export const SalesView = ({ sales, setIsSaleModalOpen, onViewInvoice }: SalesVie
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {(sales || []).map(sale => (
-                <tr key={sale.id} className="hover:bg-neutral-50/50 transition-colors">
+              {(sales || []).map((sale, idx) => (
+                <tr key={`${sale.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
                   <td className="px-6 py-4 font-mono text-xs text-neutral-500">#{sale.id.slice(-6)}</td>
                   <td className="px-6 py-4 text-neutral-600">{new Date(sale.date).toLocaleString()}</td>
                   <td className="px-6 py-4 font-medium">{sale.clientName}</td>
@@ -452,8 +452,8 @@ export const BannersView = ({ banners, onEdit, onDelete, onAdd }: BannersViewPro
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {(banners || []).map((banner: Banner) => (
-          <div key={banner.id} className={`glass-card p-6 border-l-4 ${
+        {(banners || []).map((banner: Banner, idx: number) => (
+          <div key={`${banner.id}-${idx}`} className={`glass-card p-6 border-l-4 ${
             banner.isActive ? 'border-brand-orange' : 'border-neutral-300 opacity-60'
           }`}>
             <div className="flex justify-between items-start mb-4">

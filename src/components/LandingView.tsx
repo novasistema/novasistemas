@@ -251,9 +251,9 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8">
-            {portfolioApps.map((app) => (
+            {portfolioApps.map((app, idx) => (
               <motion.div 
-                key={app.id}
+                key={`${app.id}-${idx}`}
                 whileHover={{ y: -4 }}
                 className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200/80 shadow-md hover:shadow-xl transition-all flex flex-col justify-between"
               >
@@ -403,8 +403,8 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
           <h2 className="text-3xl sm:text-4xl font-bold mb-10 sm:mb-12">Próximos Cambios y Mejoras</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-            {(banners || []).filter(b => b.isActive).map((banner) => (
-              <div key={banner.id} className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
+            {(banners || []).filter(b => b.isActive).map((banner, idx) => (
+              <div key={`${banner.id}-${idx}`} className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                     banner.type === 'Innovation' ? 'bg-indigo-500/20 text-indigo-400' : 

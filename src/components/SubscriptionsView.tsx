@@ -203,10 +203,10 @@ export const SubscriptionsView = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 text-sm">
-              {filtered.map(sub => {
+              {filtered.map((sub, idx) => {
                 const showPass = visiblePasswords[sub.id];
                 return (
-                <tr key={sub.id} className="hover:bg-neutral-50/50 transition-colors">
+                <tr key={`${sub.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-bold text-neutral-900">{sub.clientName}</div>
                   </td>

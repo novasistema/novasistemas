@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Globe, User, Key, Eye, EyeOff } from 'lucide-react';
-import { Client, Subscription } from '../types';
+import { Client, Product, Subscription } from '../types';
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -9,6 +9,7 @@ interface SubscriptionModalProps {
   onSubmit: (data: any) => void;
   editingSubscription: Subscription | null;
   clients: Client[];
+  products?: Product[];
 }
 
 export const SubscriptionModal = ({ 
@@ -16,21 +17,30 @@ export const SubscriptionModal = ({
   onClose, 
   onSubmit, 
   editingSubscription, 
-  clients = [] 
+  clients = [],
+  products = [] 
 }: SubscriptionModalProps) => {
   const [selectedClientId, setSelectedClientId] = useState('');
   const [systemName, setSystemName] = useState('');
+  const [selectedSystemKey, setSelectedSystemKey] = useState('');
   const [customSystem, setCustomSystem] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [priceValue, setPriceValue] = useState<number | string>('');
+  const [periodValue, setPeriodValue] = useState<'Mensual' | 'Anual' | 'Semestral'>('Mensual');
 
   useEffect(() => {
     if (editingSubscription) {
       setSelectedClientId(editingSubscription.clientId);
       setSystemName(editingSubscription.systemName);
+      setPriceValue(editingSubscription.price);
+      setPeriodValue(editingSubscription.period);
       setCustomSystem(true);
     } else {
       setSelectedClientId('');
       setSystemName('');
+      setSelectedSystemKey('');
+      setPriceValue('');
+      setPeriodValue('Mensual');
       setCustomSystem(false);
     }
   }, [editingSubscription, isOpen]);
@@ -42,11 +52,15 @@ export const SubscriptionModal = ({
     const formData = new FormData(e.currentTarget);
     const client = clients.find(c => c.id === selectedClientId);
 
+    const finalSystemName = customSystem 
+      ? (formData.get('systemNameCustom') as string || '').trim() 
+      : systemName;
+
     const subscriptionData = {
       id: editingSubscription?.id || Date.now().toString(),
       clientId: selectedClientId,
       clientName: client ? client.name : (editingSubscription?.clientName || ''),
-      systemName: systemName || formData.get('systemNameCustom') as string,
+      systemName: finalSystemName,
       appUrl: (formData.get('appUrl') as string || '').trim(),
       appUser: (formData.get('appUser') as string || '').trim(),
       appPassword: (formData.get('appPassword') as string || '').trim(),
@@ -62,6 +76,33 @@ export const SubscriptionModal = ({
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const clientSystems = selectedClient?.systems || [];
+
+  const handleSystemSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedSystemKey(val);
+
+    if (val.startsWith('PORTFOLIO:')) {
+      const prodId = val.replace('PORTFOLIO:', '');
+      const prod = products.find(p => p.id === prodId);
+      if (prod) {
+        setSystemName(prod.name);
+        if (prod.hasSubscription && prod.subscriptionPrice) {
+          setPriceValue(prod.subscriptionPrice);
+          setPeriodValue(prod.subscriptionPeriod || 'Mensual');
+        } else {
+          setPriceValue(prod.price);
+        }
+      }
+    } else if (val.startsWith('CLIENT:')) {
+      const sysId = val.replace('CLIENT:', '');
+      const sys = clientSystems.find(s => s.id === sysId);
+      if (sys) {
+        setSystemName(sys.name);
+      }
+    } else {
+      setSystemName('');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -93,8 +134,6 @@ export const SubscriptionModal = ({
               value={selectedClientId}
               onChange={(e) => {
                 setSelectedClientId(e.target.value);
-                setSystemName('');
-                setCustomSystem(false);
               }}
               required
               disabled={!!editingSubscription}
@@ -110,28 +149,49 @@ export const SubscriptionModal = ({
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-neutral-700">Sistema / Servicio</label>
-              {clientSystems.length > 0 && (
-                <button 
-                  type="button" 
-                  onClick={() => setCustomSystem(!customSystem)}
-                  className="text-xs text-brand-orange hover:underline font-semibold"
-                >
-                  {customSystem ? 'Elegir del cliente' : 'Escribir manual'}
-                </button>
-              )}
+              <button 
+                type="button" 
+                onClick={() => {
+                  setCustomSystem(!customSystem);
+                  if (customSystem) {
+                    setSystemName('');
+                    setSelectedSystemKey('');
+                  }
+                }}
+                className="text-xs text-brand-orange hover:underline font-semibold"
+              >
+                {customSystem ? 'Elegir del Portafolio' : 'Escribir manual'}
+              </button>
             </div>
 
-            {!customSystem && clientSystems.length > 0 ? (
+            {!customSystem ? (
               <select 
-                value={systemName} 
-                onChange={(e) => setSystemName(e.target.value)}
+                value={selectedSystemKey} 
+                onChange={handleSystemSelect}
                 required
                 className="input-field"
               >
-                <option value="">Seleccionar Sistema del Cliente...</option>
-                {clientSystems.map(s => (
-                  <option key={s.id} value={s.name}>{s.name} - ({s.type})</option>
-                ))}
+                <option value="">Seleccionar Sistema o Servicio...</option>
+                
+                {clientSystems.length > 0 && (
+                  <optgroup label="👤 Sistemas Específicos del Cliente">
+                    {clientSystems.map(s => (
+                      <option key={s.id} value={`CLIENT:${s.id}`}>
+                        {s.name} ({s.type})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+                {products.length > 0 && (
+                  <optgroup label="📦 Portafolio / Productos Nova AJ">
+                    {products.map(p => (
+                      <option key={p.id} value={`PORTFOLIO:${p.id}`}>
+                        {p.name} {p.hasSubscription && p.subscriptionPrice ? `(Suscripción: $${p.subscriptionPrice.toLocaleString()} / ${p.subscriptionPeriod || 'Mensual'})` : `($${p.price.toLocaleString()})`}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             ) : (
               <input 
@@ -203,7 +263,8 @@ export const SubscriptionModal = ({
               <input 
                 name="price" 
                 type="number" 
-                defaultValue={editingSubscription?.price} 
+                value={priceValue}
+                onChange={(e) => setPriceValue(e.target.value)}
                 required 
                 className="input-field" 
                 placeholder="0" 
@@ -211,7 +272,12 @@ export const SubscriptionModal = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">Periodo</label>
-              <select name="period" defaultValue={editingSubscription?.period || 'Mensual'} className="input-field">
+              <select 
+                name="period" 
+                value={periodValue}
+                onChange={(e) => setPeriodValue(e.target.value as any)}
+                className="input-field"
+              >
                 <option value="Mensual">Mensual</option>
                 <option value="Semestral">Semestral</option>
                 <option value="Anual">Anual</option>
