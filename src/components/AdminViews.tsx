@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   Search, 
@@ -10,7 +10,11 @@ import {
   ShoppingCart, 
   ChevronRight,
   Clock,
-  FileText
+  FileText,
+  Share2,
+  Globe,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Client, Product, Sale, Banner, View } from '../types';
 
@@ -249,11 +253,42 @@ export const ProductsView = ({
   setIsProductModalOpen, 
   handleDeleteProduct 
 }: ProductsViewProps) => {
+  const [copiedProductId, setCopiedProductId] = useState<string | null>(null);
+
   const filtered = (products || []).filter(p => 
     (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
     (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (p.category || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleShareProduct = async (product: Product) => {
+    const rawUrl = product.demoUrl 
+      ? (product.demoUrl.startsWith('http') ? product.demoUrl : `https://${product.demoUrl}`)
+      : window.location.origin;
+
+    const shareText = `Aplicación ${product.name} (Nova AJ): ${rawUrl}`;
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ title: product.name, text: shareText, url: rawUrl })) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Conoce el sistema ${product.name} de Nova AJ:`,
+          url: rawUrl,
+        });
+        return;
+      } catch (e) {
+        // Fallback to clipboard
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(rawUrl);
+      setCopiedProductId(product.id);
+      setTimeout(() => setCopiedProductId(null), 2500);
+    } catch (err) {
+      console.error('Error copying product link:', err);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -298,7 +333,20 @@ export const ProductsView = ({
                     {product.description && (
                       <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2 max-w-md">{product.description}</p>
                     )}
-                    <div className="text-[11px] text-neutral-400 font-mono mt-1">SKU: {product.sku}</div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[11px] text-neutral-400 font-mono">SKU: {product.sku}</span>
+                      {product.demoUrl && (
+                        <a 
+                          href={product.demoUrl.startsWith('http') ? product.demoUrl : `https://${product.demoUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-brand-orange hover:underline flex items-center gap-1 font-semibold truncate max-w-[200px]"
+                        >
+                          <Globe size={12} />
+                          <span>{product.demoUrl}</span>
+                        </a>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2.5 py-1 bg-neutral-100 rounded-lg text-xs font-semibold text-neutral-700">
@@ -326,6 +374,17 @@ export const ProductsView = ({
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleShareProduct(product)}
+                        className={`p-2 rounded-lg transition-all ${
+                          copiedProductId === product.id 
+                            ? 'text-emerald-600 bg-emerald-50' 
+                            : 'text-neutral-400 hover:text-brand-orange hover:bg-orange-50'
+                        }`}
+                        title={copiedProductId === product.id ? '¡Link copiado!' : 'Compartir / Copiar enlace de la aplicación'}
+                      >
+                        {copiedProductId === product.id ? <Check size={18} /> : <Share2 size={18} />}
+                      </button>
                       <button 
                         onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }}
                         className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"

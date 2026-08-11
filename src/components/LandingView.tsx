@@ -17,7 +17,10 @@ import {
   X,
   Layers,
   CheckCircle2,
-  PhoneCall
+  PhoneCall,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Banner, Product, View } from '../types';
 
@@ -30,6 +33,7 @@ interface LandingViewProps {
 
 export const LandingView = ({ setView, banners, products = [], onAdminClick }: LandingViewProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [copiedAppId, setCopiedAppId] = useState<string | null>(null);
 
   const portfolioApps = (products || []).filter(p => p.inPortfolio !== false);
 
@@ -41,6 +45,35 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
   const handleContactWhatsApp = () => {
     const text = encodeURIComponent('Hola Nova AJ! Quisiera consultar por el desarrollo de un proyecto o sistema a medida.');
     window.open(`https://wa.me/5493815043132?text=${text}`, '_blank');
+  };
+
+  const handleShareApp = async (app: Product) => {
+    const rawUrl = app.demoUrl 
+      ? (app.demoUrl.startsWith('http') ? app.demoUrl : `https://${app.demoUrl}`)
+      : window.location.href;
+      
+    const shareData = {
+      title: app.name,
+      text: `Conoce la aplicación "${app.name}" de Nova AJ:`,
+      url: rawUrl,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        // Fallback to clipboard if user dismissed or share failed
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(rawUrl);
+      setCopiedAppId(app.id);
+      setTimeout(() => setCopiedAppId(null), 2500);
+    } catch (e) {
+      console.error('Error copying link:', e);
+    }
   };
 
   const scrollToPortfolio = () => {
@@ -300,26 +333,72 @@ export const LandingView = ({ setView, banners, products = [], onAdminClick }: L
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <button 
-                    onClick={() => handleRequestDemo(app.name)}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 text-sm"
-                  >
-                    <MessageCircle size={18} />
-                    <span>Pedir Demo por WhatsApp</span>
-                  </button>
+                <div className="pt-4 border-t border-neutral-100 flex flex-col gap-3">
+                  {app.demoUrl ? (
+                    <div className="flex items-center justify-between text-xs bg-neutral-50 px-3 py-2 rounded-xl border border-neutral-100 text-neutral-600 font-mono overflow-hidden">
+                      <span className="truncate mr-2">{app.demoUrl}</span>
+                      <button 
+                        onClick={() => handleShareApp(app)}
+                        className="text-brand-orange hover:text-orange-600 font-sans font-bold flex items-center gap-1 shrink-0"
+                        title="Copiar / Compartir enlace"
+                      >
+                        {copiedAppId === app.id ? (
+                          <>
+                            <Check size={14} className="text-emerald-500" />
+                            <span className="text-emerald-600 text-[11px]">¡Copiado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={13} />
+                            <span className="text-[11px]">Copiar Link</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : null}
 
-                  {app.demoUrl && (
-                    <a 
-                      href={app.demoUrl.startsWith('http') ? app.demoUrl : `https://${app.demoUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary py-3 px-4 text-xs font-bold justify-center"
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <button 
+                      onClick={() => handleRequestDemo(app.name)}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 text-sm"
                     >
-                      <span>Ver Demo Online</span>
-                      <ExternalLink size={14} />
-                    </a>
-                  )}
+                      <MessageCircle size={18} />
+                      <span>Pedir Demo por WhatsApp</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleShareApp(app)}
+                      className={`btn-secondary py-3 px-3.5 text-xs font-bold justify-center transition-all ${
+                        copiedAppId === app.id ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : ''
+                      }`}
+                      title="Compartir enlace de esta aplicación"
+                    >
+                      {copiedAppId === app.id ? (
+                        <>
+                          <Check size={16} className="text-emerald-500" />
+                          <span>¡Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 size={16} />
+                          <span>Compartir</span>
+                        </>
+                      )}
+                    </button>
+
+                    {app.demoUrl && (
+                      <a 
+                        href={app.demoUrl.startsWith('http') ? app.demoUrl : `https://${app.demoUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary py-3 px-3.5 text-xs font-bold justify-center"
+                        title="Abrir Demo Online"
+                      >
+                        <span>Demo</span>
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
