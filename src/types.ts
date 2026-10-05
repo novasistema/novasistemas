@@ -16,6 +16,14 @@ export interface Client {
   systems: AppSystem[]; // Associated systems
 }
 
+export interface ProductCredential {
+  id: string;
+  title: string;
+  user: string;
+  password: string;
+  notes?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -29,6 +37,14 @@ export interface Product {
   hasSubscription?: boolean;
   subscriptionPrice?: number;
   subscriptionPeriod?: 'Mensual' | 'Anual' | 'Semestral';
+  // Sector de contraseñas y accesos (Administrador / Creador)
+  adminLoginUrl?: string;
+  adminUser?: string;
+  adminPassword?: string;
+  creatorUser?: string;
+  creatorPassword?: string;
+  accessNotes?: string;
+  extraCredentials?: ProductCredential[];
 }
 
 export interface SaleItem {

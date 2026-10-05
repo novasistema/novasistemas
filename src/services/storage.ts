@@ -47,7 +47,13 @@ const DEFAULT_PRODUCTS: Product[] = [
     inPortfolio: true,
     hasSubscription: true,
     subscriptionPrice: 8500,
-    subscriptionPeriod: 'Mensual'
+    subscriptionPeriod: 'Mensual',
+    adminLoginUrl: 'https://demo-erp.nova-aj.app/admin',
+    adminUser: 'admin@empresa.com',
+    adminPassword: 'ERPAdmin#2024',
+    creatorUser: 'creador@nova-aj.app',
+    creatorPassword: 'NovaMasterKey*99',
+    accessNotes: 'Acceso total como Creador con privilegios raíz y configuración de módulos.'
   },
   { 
     id: '2', 
@@ -61,7 +67,13 @@ const DEFAULT_PRODUCTS: Product[] = [
     inPortfolio: true,
     hasSubscription: true,
     subscriptionPrice: 7500,
-    subscriptionPeriod: 'Mensual'
+    subscriptionPeriod: 'Mensual',
+    adminLoginUrl: 'https://demo-ferreteria.nova-aj.app/login',
+    adminUser: 'administrador',
+    adminPassword: 'Ferreteria2024*',
+    creatorUser: 'creador_ferreteria',
+    creatorPassword: 'CreadorFerre#2024',
+    accessNotes: 'PIN de apertura de caja por defecto: 1234.'
   },
   { 
     id: '3', 
@@ -75,7 +87,13 @@ const DEFAULT_PRODUCTS: Product[] = [
     inPortfolio: true,
     hasSubscription: true,
     subscriptionPrice: 6000,
-    subscriptionPeriod: 'Mensual'
+    subscriptionPeriod: 'Mensual',
+    adminLoginUrl: 'https://demo-preventa.nova-aj.app/panel',
+    adminUser: 'supervisor@distribucion.com',
+    adminPassword: 'PreVentaPass!88',
+    creatorUser: 'creador@nova-aj.app',
+    creatorPassword: 'MobileMaster#77',
+    accessNotes: 'Token API de sincronización activa en servidor central.'
   },
   { 
     id: '4', 
@@ -87,7 +105,13 @@ const DEFAULT_PRODUCTS: Product[] = [
     description: 'Gestión de agenda, reservas online, cobro de cuotas mensuales y avisos automáticos de vencimiento por WhatsApp a tus clientes.',
     demoUrl: 'https://demo-turnos.nova-aj.app',
     inPortfolio: true,
-    hasSubscription: false
+    hasSubscription: false,
+    adminLoginUrl: 'https://demo-turnos.nova-aj.app/admin',
+    adminUser: 'admin',
+    adminPassword: 'TurnosAdmin2024',
+    creatorUser: 'creador_turnos',
+    creatorPassword: 'NovaTurnos#2024',
+    accessNotes: 'Clave de webhook de WhatsApp disponible en panel de creador.'
   },
 ];
 
@@ -159,6 +183,9 @@ export const storageService = {
   saveAdminPassword: (password: string) => {
     localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, password);
   },
+  resetAdminPassword: (): void => {
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_PASSWORD);
+  },
 
   // --- REAL-TIME LISTENERS & FIRESTORE SYNC ---
 
@@ -173,7 +200,23 @@ export const storageService = {
         });
         await batch.commit();
       } else {
-        const items = snapshot.docs.map(doc => doc.data() as Product);
+        const items = snapshot.docs.map(docSnap => {
+          const data = docSnap.data() as Product;
+          const seed = DEFAULT_PRODUCTS.find(p => p.id === data.id);
+          if (seed && !data.adminUser && !data.creatorUser && !data.adminPassword) {
+            return {
+              ...seed,
+              ...data,
+              adminLoginUrl: data.adminLoginUrl || seed.adminLoginUrl,
+              adminUser: data.adminUser || seed.adminUser,
+              adminPassword: data.adminPassword || seed.adminPassword,
+              creatorUser: data.creatorUser || seed.creatorUser,
+              creatorPassword: data.creatorPassword || seed.creatorPassword,
+              accessNotes: data.accessNotes || seed.accessNotes,
+            };
+          }
+          return data;
+        });
         callback(items);
       }
     }, (error) => {

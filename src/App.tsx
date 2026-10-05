@@ -123,6 +123,14 @@ export default function App() {
       hasSubscription: hasSub,
       subscriptionPrice: hasSub ? Number(formData.get('subscriptionPrice') || 0) : undefined,
       subscriptionPeriod: hasSub ? (formData.get('subscriptionPeriod') as any || 'Mensual') : undefined,
+      // Sector de contraseñas y accesos (Administrador / Creador)
+      adminLoginUrl: (formData.get('adminLoginUrl') as string || '').trim(),
+      adminUser: (formData.get('adminUser') as string || '').trim(),
+      adminPassword: (formData.get('adminPassword') as string || '').trim(),
+      creatorUser: (formData.get('creatorUser') as string || '').trim(),
+      creatorPassword: (formData.get('creatorPassword') as string || '').trim(),
+      accessNotes: (formData.get('accessNotes') as string || '').trim(),
+      extraCredentials: editingProduct?.extraCredentials || [],
     };
 
     let updatedProducts;

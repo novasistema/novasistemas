@@ -27,6 +27,9 @@ export const SubscriptionModal = ({
   const [showPassword, setShowPassword] = useState(false);
   const [priceValue, setPriceValue] = useState<number | string>('');
   const [periodValue, setPeriodValue] = useState<'Mensual' | 'Anual' | 'Semestral'>('Mensual');
+  const [appUrlValue, setAppUrlValue] = useState('');
+  const [appUserValue, setAppUserValue] = useState('');
+  const [appPasswordValue, setAppPasswordValue] = useState('');
 
   useEffect(() => {
     if (editingSubscription) {
@@ -34,6 +37,9 @@ export const SubscriptionModal = ({
       setSystemName(editingSubscription.systemName);
       setPriceValue(editingSubscription.price);
       setPeriodValue(editingSubscription.period);
+      setAppUrlValue(editingSubscription.appUrl || '');
+      setAppUserValue(editingSubscription.appUser || '');
+      setAppPasswordValue(editingSubscription.appPassword || '');
       setCustomSystem(true);
     } else {
       setSelectedClientId('');
@@ -41,6 +47,9 @@ export const SubscriptionModal = ({
       setSelectedSystemKey('');
       setPriceValue('');
       setPeriodValue('Mensual');
+      setAppUrlValue('');
+      setAppUserValue('');
+      setAppPasswordValue('');
       setCustomSystem(false);
     }
   }, [editingSubscription, isOpen]);
@@ -91,6 +100,15 @@ export const SubscriptionModal = ({
           setPeriodValue(prod.subscriptionPeriod || 'Mensual');
         } else {
           setPriceValue(prod.price);
+        }
+        if (prod.adminLoginUrl || prod.demoUrl) {
+          setAppUrlValue(prod.adminLoginUrl || prod.demoUrl || '');
+        }
+        if (prod.adminUser) {
+          setAppUserValue(prod.adminUser);
+        }
+        if (prod.adminPassword) {
+          setAppPasswordValue(prod.adminPassword);
         }
       }
     } else if (val.startsWith('CLIENT:')) {
@@ -212,7 +230,8 @@ export const SubscriptionModal = ({
             <input 
               name="appUrl"
               type="url"
-              defaultValue={editingSubscription?.appUrl || ''}
+              value={appUrlValue}
+              onChange={(e) => setAppUrlValue(e.target.value)}
               className="input-field" 
               placeholder="https://su-sistema.com o link del panel" 
             />
@@ -227,7 +246,8 @@ export const SubscriptionModal = ({
               <input 
                 name="appUser"
                 type="text"
-                defaultValue={editingSubscription?.appUser || ''}
+                value={appUserValue}
+                onChange={(e) => setAppUserValue(e.target.value)}
                 className="input-field" 
                 placeholder="admin@cliente.com" 
               />
@@ -241,7 +261,8 @@ export const SubscriptionModal = ({
                 <input 
                   name="appPassword"
                   type={showPassword ? 'text' : 'password'}
-                  defaultValue={editingSubscription?.appPassword || ''}
+                  value={appPasswordValue}
+                  onChange={(e) => setAppPasswordValue(e.target.value)}
                   className="input-field pr-10" 
                   placeholder="••••••••" 
                 />

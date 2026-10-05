@@ -14,9 +14,14 @@ import {
   Share2,
   Globe,
   Copy,
-  Check
+  Check,
+  Key,
+  ShieldCheck,
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import { Client, Product, Sale, Banner, View } from '../types';
+import { ProductCredentialsModal } from './ProductCredentialsModal';
 
 // --- StatCard ---
 export const StatCard = ({ title, value, icon: Icon, trend, trendValue }: any) => (
@@ -254,6 +259,7 @@ export const ProductsView = ({
   handleDeleteProduct 
 }: ProductsViewProps) => {
   const [copiedProductId, setCopiedProductId] = useState<string | null>(null);
+  const [selectedCredentialsProduct, setSelectedCredentialsProduct] = useState<Product | null>(null);
 
   const filtered = (products || []).filter(p => 
     (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -295,7 +301,7 @@ export const ProductsView = ({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Sistemas & Aplicaciones (Portafolio)</h2>
-          <p className="text-neutral-500 mt-1 text-sm sm:text-base">Administra las aplicaciones que ofreces y su visibilidad en el portafolio público.</p>
+          <p className="text-neutral-500 mt-1 text-sm sm:text-base">Administra las aplicaciones que ofreces, sus contraseñas de admin/creador y su visibilidad en el portafolio público.</p>
         </div>
         <button onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }} className="btn-primary w-full md:w-auto justify-center">
           <Plus size={20} />
@@ -322,90 +328,139 @@ export const ProductsView = ({
                 <th className="px-6 py-4">Categoría</th>
                 <th className="px-6 py-4">Portafolio Web</th>
                 <th className="px-6 py-4">Precio</th>
+                <th className="px-6 py-4">Contraseñas & Accesos</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {filtered.map((product, idx) => (
-                <tr key={`${product.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-neutral-900">{product.name}</div>
-                    {product.description && (
-                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2 max-w-md">{product.description}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[11px] text-neutral-400 font-mono">SKU: {product.sku}</span>
-                      {product.demoUrl && (
-                        <a 
-                          href={product.demoUrl.startsWith('http') ? product.demoUrl : `https://${product.demoUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[11px] text-brand-orange hover:underline flex items-center gap-1 font-semibold truncate max-w-[200px]"
-                        >
-                          <Globe size={12} />
-                          <span>{product.demoUrl}</span>
-                        </a>
+              {filtered.map((product, idx) => {
+                const hasCredentials = Boolean(
+                  product.adminUser || 
+                  product.adminPassword || 
+                  product.creatorUser || 
+                  product.creatorPassword || 
+                  product.adminLoginUrl ||
+                  product.accessNotes ||
+                  (product.extraCredentials && product.extraCredentials.length > 0)
+                );
+
+                return (
+                  <tr key={`${product.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-neutral-900">{product.name}</div>
+                      {product.description && (
+                        <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2 max-w-md">{product.description}</p>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-neutral-100 rounded-lg text-xs font-semibold text-neutral-700">
-                      {product.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
-                      product.inPortfolio !== false 
-                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
-                        : 'bg-neutral-100 text-neutral-400'
-                    }`}>
-                      {product.inPortfolio !== false ? 'Visible en Web' : 'Oculto'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-neutral-900">${product.price.toLocaleString()}</div>
-                    {product.hasSubscription && product.subscriptionPrice ? (
-                      <div className="text-[11px] font-medium text-brand-orange mt-0.5">
-                        +${product.subscriptionPrice.toLocaleString()} / {product.subscriptionPeriod || 'Mensual'}
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[11px] text-neutral-400 font-mono">SKU: {product.sku}</span>
+                        {product.demoUrl && (
+                          <a 
+                            href={product.demoUrl.startsWith('http') ? product.demoUrl : `https://${product.demoUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-brand-orange hover:underline flex items-center gap-1 font-semibold truncate max-w-[200px]"
+                          >
+                            <Globe size={12} />
+                            <span>{product.demoUrl}</span>
+                          </a>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-[11px] text-neutral-400">Sin suscripción</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        onClick={() => handleShareProduct(product)}
-                        className={`p-2 rounded-lg transition-all ${
-                          copiedProductId === product.id 
-                            ? 'text-emerald-600 bg-emerald-50' 
-                            : 'text-neutral-400 hover:text-brand-orange hover:bg-orange-50'
-                        }`}
-                        title={copiedProductId === product.id ? '¡Link copiado!' : 'Compartir / Copiar enlace de la aplicación'}
-                      >
-                        {copiedProductId === product.id ? <Check size={18} /> : <Share2 size={18} />}
-                      </button>
-                      <button 
-                        onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }}
-                        className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"
-                        title="Editar"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                        title="Eliminar"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2.5 py-1 bg-neutral-100 rounded-lg text-xs font-semibold text-neutral-700">
+                        {product.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
+                        product.inPortfolio !== false 
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
+                          : 'bg-neutral-100 text-neutral-400'
+                      }`}>
+                        {product.inPortfolio !== false ? 'Visible en Web' : 'Oculto'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-neutral-900">${product.price.toLocaleString()}</div>
+                      {product.hasSubscription && product.subscriptionPrice ? (
+                        <div className="text-[11px] font-medium text-brand-orange mt-0.5">
+                          +${product.subscriptionPrice.toLocaleString()} / {product.subscriptionPeriod || 'Mensual'}
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-neutral-400">Sin suscripción</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {hasCredentials ? (
+                        <button
+                          onClick={() => setSelectedCredentialsProduct(product)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-xs group"
+                          title="Ver contraseñas de Administrador y Creador"
+                        >
+                          <Key size={14} className="text-amber-600 group-hover:rotate-12 transition-transform" />
+                          <span>Ver Claves</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setIsProductModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-neutral-500 hover:text-amber-700 hover:bg-amber-50/70 border border-dashed border-neutral-300 transition-all"
+                          title="Agregar contraseñas para este producto"
+                        >
+                          <Plus size={13} />
+                          <span>+ Agregar Claves</span>
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-1.5 sm:gap-2">
+                        <button 
+                          onClick={() => setSelectedCredentialsProduct(product)}
+                          className={`p-2 rounded-lg transition-all ${
+                            hasCredentials 
+                              ? 'text-amber-600 hover:bg-amber-50' 
+                              : 'text-neutral-400 hover:text-amber-600 hover:bg-amber-50'
+                          }`}
+                          title="Ver / Copiar Contraseñas (Admin y Creador)"
+                        >
+                          <Key size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleShareProduct(product)}
+                          className={`p-2 rounded-lg transition-all ${
+                            copiedProductId === product.id 
+                              ? 'text-emerald-600 bg-emerald-50' 
+                              : 'text-neutral-400 hover:text-brand-orange hover:bg-orange-50'
+                          }`}
+                          title={copiedProductId === product.id ? '¡Link copiado!' : 'Compartir / Copiar enlace de la aplicación'}
+                        >
+                          {copiedProductId === product.id ? <Check size={18} /> : <Share2 size={18} />}
+                        </button>
+                        <button 
+                          onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }}
+                          className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"
+                          title="Editar Producto / Contraseñas"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-neutral-400 italic">
+                  <td colSpan={6} className="py-12 text-center text-neutral-400 italic">
                     No se encontraron sistemas o productos.
                   </td>
                 </tr>
@@ -414,6 +469,18 @@ export const ProductsView = ({
           </table>
         </div>
       </div>
+
+      {/* Modal de consulta rápida y copiado de contraseñas */}
+      <ProductCredentialsModal
+        isOpen={!!selectedCredentialsProduct}
+        onClose={() => setSelectedCredentialsProduct(null)}
+        product={selectedCredentialsProduct}
+        onEdit={(prod) => {
+          setSelectedCredentialsProduct(null);
+          setEditingProduct(prod);
+          setIsProductModalOpen(true);
+        }}
+      />
     </div>
   );
 };

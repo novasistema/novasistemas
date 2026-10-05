@@ -16,7 +16,14 @@
         "inPortfolio": { "type": "boolean" },
         "hasSubscription": { "type": "boolean" },
         "subscriptionPrice": { "type": "number" },
-        "subscriptionPeriod": { "type": "string" }
+        "subscriptionPeriod": { "type": "string" },
+        "adminLoginUrl": { "type": "string" },
+        "adminUser": { "type": "string" },
+        "adminPassword": { "type": "string" },
+        "creatorUser": { "type": "string" },
+        "creatorPassword": { "type": "string" },
+        "accessNotes": { "type": "string" },
+        "extraCredentials": { "type": "array" }
       },
       "required": ["name", "price", "sku"]
     },

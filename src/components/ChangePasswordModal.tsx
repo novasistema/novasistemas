@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { KeyRound, Eye, EyeOff, X, Check, ShieldAlert } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, X, Check, ShieldAlert, RotateCcw } from 'lucide-react';
 import { storageService } from '../services/storage';
 
 interface ChangePasswordModalProps {
@@ -16,6 +16,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
   const [showNew, setShowNew] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   if (!isOpen) return null;
 
@@ -50,6 +51,14 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
     }, 1500);
   };
 
+  const handleResetToDefault = () => {
+    storageService.resetAdminPassword();
+    setCurrentPassword('admin123');
+    setResetDone(true);
+    setErrorMsg('');
+    setTimeout(() => setResetDone(false), 4000);
+  };
+
   return (
     <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
       <motion.div 
@@ -80,6 +89,12 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
           </button>
         </div>
 
+        {resetDone && (
+          <div className="mb-4 p-3 bg-emerald-50 text-emerald-800 text-xs rounded-xl border border-emerald-200">
+            Contraseña restablecida a <strong>admin123</strong>. Se completó en el campo de contraseña actual.
+          </div>
+        )}
+
         {successMsg ? (
           <div className="py-8 text-center space-y-3">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
@@ -91,14 +106,34 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl flex items-center gap-2 border border-red-100">
-                <ShieldAlert size={16} className="shrink-0" />
-                <span>{errorMsg}</span>
+              <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl space-y-1.5 border border-red-100">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert size={16} className="shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetToDefault}
+                  className="text-xs text-brand-orange hover:underline font-semibold flex items-center gap-1 mt-1"
+                >
+                  <RotateCcw size={12} />
+                  ¿No la recuerdas? Restablecer clave a fábrica (admin123)
+                </button>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-neutral-700 mb-1">Contraseña Actual</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-neutral-700">Contraseña Actual</label>
+                <button
+                  type="button"
+                  onClick={handleResetToDefault}
+                  className="text-[11px] text-brand-orange hover:underline flex items-center gap-1"
+                >
+                  <RotateCcw size={11} />
+                  Restablecer a admin123
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type={showCurrent ? 'text' : 'password'}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { X, ShoppingCart, Plus, Trash2 } from 'lucide-react';
+import { X, ShoppingCart, Plus, Trash2, Key, ShieldCheck, Sparkles, Globe, Eye, EyeOff, Lock, FileText } from 'lucide-react';
 import { Client, Product, SaleItem, Banner } from '../types';
 
 interface ClientModalProps {
@@ -68,6 +68,9 @@ interface ProductModalProps {
 
 export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: ProductModalProps) => {
   const [hasSub, setHasSub] = React.useState<boolean>(editingProduct?.hasSubscription || false);
+  const [showAdminPassword, setShowAdminPassword] = React.useState(false);
+  const [showCreatorPassword, setShowCreatorPassword] = React.useState(false);
+  const [isCredentialsOpen, setIsCredentialsOpen] = React.useState(true);
 
   React.useEffect(() => {
     if (editingProduct) {
@@ -87,15 +90,18 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
       />
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="glass-card w-full max-w-md p-6 sm:p-8 relative z-10 max-h-[90vh] overflow-y-auto"
+        className="glass-card w-full max-w-xl p-6 sm:p-8 relative z-10 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold">{editingProduct ? 'Editar Sistema / Producto' : 'Nuevo Sistema / Producto'}</h3>
-          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600">
+          <div>
+            <h3 className="text-xl font-bold">{editingProduct ? 'Editar Sistema / Producto' : 'Nuevo Sistema / Producto'}</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">Configura detalles del producto, suscripción y credenciales de acceso</p>
+          </div>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 p-1 rounded-lg hover:bg-neutral-100">
             <X size={24} />
           </button>
         </div>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-1">Nombre de la Aplicación o Sistema</label>
             <input name="name" defaultValue={editingProduct?.name} required className="input-field" placeholder="Ej: Sistema ERP Facturación" />
@@ -107,7 +113,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1">SKU / Código</label>
-              <input name="sku" defaultValue={editingProduct?.sku || `SYS-${Math.floor(Math.random() * 900 + 100)}`} required className="input-field" placeholder="ERP-001" />
+              <input name="sku" defaultValue={editingProduct?.sku || `SYS-${Math.floor(Math.random() * 900 + 100)}`} required className="input-field font-mono" placeholder="ERP-001" />
             </div>
           </div>
           <div>
@@ -115,13 +121,16 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
             <textarea 
               name="description" 
               defaultValue={editingProduct?.description || ''} 
-              rows={3} 
+              rows={2} 
               className="input-field py-2" 
               placeholder="Escribe un breve resumen de las funciones principales para mostrar a los clientes en el portafolio..." 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">Link Demo Online (Opcional)</label>
+            <label className="block text-sm font-medium text-neutral-700 mb-1 flex items-center gap-1.5">
+              <Globe size={15} className="text-neutral-400" />
+              Link Demo Online Público (Opcional)
+            </label>
             <input name="demoUrl" defaultValue={editingProduct?.demoUrl || ''} className="input-field" placeholder="https://demo-sistema.com" />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -147,7 +156,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
                 className="w-4 h-4 text-brand-orange rounded border-neutral-300 focus:ring-brand-orange"
               />
               <label htmlFor="hasSubscription" className="text-sm font-bold text-neutral-800">
-                ¿Incluye Suscripción / Mantenimiento?
+                ¿Incluye Suscripción / Mantenimiento Periódico?
               </label>
             </div>
 
@@ -184,6 +193,151 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
             )}
           </div>
 
+          {/* Sector de Contraseñas y Accesos (Admin / Creador) */}
+          <div className="p-4 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-amber-500/10 rounded-2xl border border-amber-300/40 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold">
+                  <Key size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                    Sector de Contraseñas & Accesos
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded uppercase">
+                      Privado
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-neutral-500">Credenciales para ingresar como Administrador o Creador</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCredentialsOpen(!isCredentialsOpen)}
+                className="text-xs text-amber-700 hover:text-amber-900 font-semibold underline"
+              >
+                {isCredentialsOpen ? 'Ocultar campos' : 'Mostrar campos'}
+              </button>
+            </div>
+
+            {isCredentialsOpen && (
+              <div className="space-y-3.5 pt-1">
+                {/* Login URL */}
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center gap-1.5">
+                    <Globe size={14} className="text-amber-600" />
+                    URL de Ingreso al Panel / Login
+                  </label>
+                  <input 
+                    name="adminLoginUrl" 
+                    type="url"
+                    defaultValue={editingProduct?.adminLoginUrl || ''} 
+                    className="input-field py-2 text-sm bg-white" 
+                    placeholder="https://su-sistema.com/admin o /login" 
+                  />
+                </div>
+
+                {/* Acceso Administrador */}
+                <div className="p-3.5 bg-white/95 rounded-xl border border-emerald-200/80 shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                      <ShieldCheck size={16} className="text-emerald-600" />
+                      <span>Acceso Administrador</span>
+                    </div>
+                    <span className="text-[10px] text-neutral-400 font-medium">Dueño del negocio / Gerente</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">Usuario / Email Admin</label>
+                      <input 
+                        name="adminUser" 
+                        defaultValue={editingProduct?.adminUser || ''} 
+                        className="input-field py-1.5 text-xs font-mono" 
+                        placeholder="admin@empresa.com o admin" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">Contraseña Admin</label>
+                      <div className="relative">
+                        <input 
+                          name="adminPassword" 
+                          type={showAdminPassword ? "text" : "password"}
+                          defaultValue={editingProduct?.adminPassword || ''} 
+                          className="input-field py-1.5 text-xs font-mono pr-9" 
+                          placeholder="••••••••" 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowAdminPassword(!showAdminPassword)} 
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                          title={showAdminPassword ? "Ocultar" : "Mostrar"}
+                        >
+                          {showAdminPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acceso Creador */}
+                <div className="p-3.5 bg-white/95 rounded-xl border border-orange-200/80 shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-orange-950">
+                      <Sparkles size={16} className="text-brand-orange" />
+                      <span>Acceso Creador / Master / Superadmin</span>
+                    </div>
+                    <span className="text-[10px] text-neutral-400 font-medium">Control total / Desarrollo</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">Usuario Creador</label>
+                      <input 
+                        name="creatorUser" 
+                        defaultValue={editingProduct?.creatorUser || ''} 
+                        className="input-field py-1.5 text-xs font-mono" 
+                        placeholder="creador@nova-aj.app" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">Contraseña Creador</label>
+                      <div className="relative">
+                        <input 
+                          name="creatorPassword" 
+                          type={showCreatorPassword ? "text" : "password"}
+                          defaultValue={editingProduct?.creatorPassword || ''} 
+                          className="input-field py-1.5 text-xs font-mono pr-9" 
+                          placeholder="••••••••" 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowCreatorPassword(!showCreatorPassword)} 
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                          title={showCreatorPassword ? "Ocultar" : "Mostrar"}
+                        >
+                          {showCreatorPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notas de Acceso / PIN / Servidor */}
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center gap-1.5">
+                    <FileText size={14} className="text-neutral-400" />
+                    Notas Técnicas, PIN de Caja o Tokens de Acceso (Opcional)
+                  </label>
+                  <textarea 
+                    name="accessNotes" 
+                    defaultValue={editingProduct?.accessNotes || ''} 
+                    rows={2} 
+                    className="input-field py-1.5 text-xs bg-white" 
+                    placeholder="Ej: PIN de caja: 1234. Llave maestra de recuperación. Base de datos en puerto 5432..." 
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2 pt-1">
             <input 
               type="checkbox" 
@@ -196,7 +350,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
               Mostrar en Portafolio Público (Landing Web)
             </label>
           </div>
-          <div className="pt-4">
+          <div className="pt-2">
             <button type="submit" className="btn-primary w-full justify-center py-3">
               {editingProduct ? 'Guardar Cambios' : 'Crear Aplicación / Producto'}
             </button>
