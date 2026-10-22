@@ -24,12 +24,18 @@ import { SubscriptionModal } from './components/SubscriptionModal';
 import { InvoiceModal } from './components/InvoiceModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { ProductSalesLanding } from './components/ProductSalesLanding';
+import { PurchaseModal } from './components/PurchaseModal';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  // Selected product for full public sales landing page (e.g. from Facebook Ads or portfolio)
+  const [selectedProductForSales, setSelectedProductForSales] = useState<Product | null>(null);
+  const [buyingProduct, setBuyingProduct] = useState<Product | null>(null);
 
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -53,6 +59,47 @@ export default function App() {
 
   // Search
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Handle URL parameters like ?product=ID or ?app=SKU for public advertising campaigns
+  const handleSelectProductForSales = (prod: Product | null) => {
+    setSelectedProductForSales(prod);
+    const url = new URL(window.location.href);
+    if (prod) {
+      url.searchParams.set('product', prod.id);
+    } else {
+      url.searchParams.delete('product');
+      url.searchParams.delete('app');
+    }
+    window.history.pushState(null, '', url.pathname + (url.search ? url.search : ''));
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const prodId = params.get('product') || params.get('app');
+      if (prodId && products.length > 0) {
+        const found = products.find(p => p.id === prodId || p.sku.toLowerCase() === prodId.toLowerCase());
+        setSelectedProductForSales(found || null);
+      } else {
+        setSelectedProductForSales(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products]);
+
+  // Initial load check for ?product= in URL once products are loaded
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prodId = params.get('product') || params.get('app');
+    if (prodId && products.length > 0) {
+      const found = products.find(p => p.id === prodId || p.sku.toLowerCase() === prodId.toLowerCase());
+      if (found) {
+        setSelectedProductForSales(found);
+      }
+    }
+  }, [products]);
 
   useEffect(() => {
     const unsubProducts = storageService.subscribeProducts(setProducts);
@@ -131,6 +178,16 @@ export default function App() {
       creatorPassword: (formData.get('creatorPassword') as string || '').trim(),
       accessNotes: (formData.get('accessNotes') as string || '').trim(),
       extraCredentials: editingProduct?.extraCredentials || [],
+      // Organización técnica: PC local, GitHub, Vercel y Google AI Studio
+      localFolderPath: (formData.get('localFolderPath') as string || '').trim(),
+      githubRepo: (formData.get('githubRepo') as string || '').trim(),
+      vercelProject: (formData.get('vercelProject') as string || '').trim(),
+      aiStudioAccount: (formData.get('aiStudioAccount') as string || '').trim(),
+      // Ficha de venta para redes sociales
+      tagline: (formData.get('tagline') as string || '').trim(),
+      badge: (formData.get('badge') as string || '').trim(),
+      originalPrice: formData.get('originalPrice') ? Number(formData.get('originalPrice')) : undefined,
+      targetAudience: (formData.get('targetAudience') as string || '').trim(),
     };
 
     let updatedProducts;
@@ -323,6 +380,32 @@ export default function App() {
     setView('landing');
   };
 
+  if (selectedProductForSales) {
+    return (
+      <>
+        <ProductSalesLanding 
+          product={selectedProductForSales} 
+          onBack={() => handleSelectProductForSales(null)} 
+          onBuy={(p) => setBuyingProduct(p)} 
+          onAdminClick={handleAdminClick} 
+        />
+        <AnimatePresence>
+          {buyingProduct && (
+            <PurchaseModal 
+              product={buyingProduct} 
+              onClose={() => setBuyingProduct(null)} 
+            />
+          )}
+          <AdminLoginModal 
+            isOpen={isAdminLoginOpen} 
+            onClose={() => setIsAdminLoginOpen(false)} 
+            onSuccess={handleAdminLoginSuccess} 
+          />
+        </AnimatePresence>
+      </>
+    );
+  }
+
   if (view === 'landing' || !isAdminAuthenticated) {
     return (
       <>
@@ -331,8 +414,15 @@ export default function App() {
           banners={banners} 
           products={products}
           onAdminClick={handleAdminClick} 
+          onViewProductSales={handleSelectProductForSales}
         />
         <AnimatePresence>
+          {buyingProduct && (
+            <PurchaseModal 
+              product={buyingProduct} 
+              onClose={() => setBuyingProduct(null)} 
+            />
+          )}
           <AdminLoginModal 
             isOpen={isAdminLoginOpen} 
             onClose={() => setIsAdminLoginOpen(false)} 
@@ -355,7 +445,7 @@ export default function App() {
       <main className="flex-1 lg:ml-64 p-4 lg:p-8 pt-24 lg:pt-8">
         <AnimatePresence mode="wait">
           <motion.div
-            key={view}
+            key={`view-content-${view}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -388,6 +478,7 @@ export default function App() {
                 setEditingProduct={setEditingProduct} 
                 setIsProductModalOpen={setIsProductModalOpen} 
                 handleDeleteProduct={handleDeleteProduct} 
+                onViewSalesLanding={handleSelectProductForSales}
               />
             )}
             {view === 'sales' && (
@@ -474,6 +565,12 @@ export default function App() {
           isOpen={isChangePasswordOpen}
           onClose={() => setIsChangePasswordOpen(false)}
         />
+        {buyingProduct && (
+          <PurchaseModal 
+            product={buyingProduct} 
+            onClose={() => setBuyingProduct(null)} 
+          />
+        )}
       </AnimatePresence>
     </div>
   );

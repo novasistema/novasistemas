@@ -158,8 +158,8 @@ export const SubscriptionModal = ({
               className="input-field"
             >
               <option value="">Seleccionar Cliente...</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+              {clients.map((c, idx) => (
+                <option key={`submodal-client-${c.id || idx}-${idx}`} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -193,8 +193,8 @@ export const SubscriptionModal = ({
                 
                 {clientSystems.length > 0 && (
                   <optgroup label="👤 Sistemas Específicos del Cliente">
-                    {clientSystems.map(s => (
-                      <option key={s.id} value={`CLIENT:${s.id}`}>
+                    {clientSystems.map((s, idx) => (
+                      <option key={`submodal-client-sys-${s.id || idx}-${idx}`} value={`CLIENT:${s.id}`}>
                         {s.name} ({s.type})
                       </option>
                     ))}
@@ -203,8 +203,8 @@ export const SubscriptionModal = ({
 
                 {products.length > 0 && (
                   <optgroup label="📦 Portafolio / Productos Nova AJ">
-                    {products.map(p => (
-                      <option key={p.id} value={`PORTFOLIO:${p.id}`}>
+                    {products.map((p, idx) => (
+                      <option key={`submodal-portfolio-${p.id || idx}-${idx}`} value={`PORTFOLIO:${p.id}`}>
                         {p.name} {p.hasSubscription && p.subscriptionPrice ? `(Suscripción: $${p.subscriptionPrice.toLocaleString()} / ${p.subscriptionPeriod || 'Mensual'})` : `($${p.price.toLocaleString()})`}
                       </option>
                     ))}

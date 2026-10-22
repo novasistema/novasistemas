@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { X, ShoppingCart, Plus, Trash2, Key, ShieldCheck, Sparkles, Globe, Eye, EyeOff, Lock, FileText } from 'lucide-react';
+import { X, ShoppingCart, Plus, Trash2, Key, ShieldCheck, Sparkles, Globe, Eye, EyeOff, Lock, FileText, Folder, GitBranch, Cloud, Bot } from 'lucide-react';
 import { Client, Product, SaleItem, Banner } from '../types';
 
 interface ClientModalProps {
@@ -71,6 +71,7 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
   const [showAdminPassword, setShowAdminPassword] = React.useState(false);
   const [showCreatorPassword, setShowCreatorPassword] = React.useState(false);
   const [isCredentialsOpen, setIsCredentialsOpen] = React.useState(true);
+  const [isDevOpsOpen, setIsDevOpsOpen] = React.useState(true);
 
   React.useEffect(() => {
     if (editingProduct) {
@@ -338,6 +339,176 @@ export const ProductModal = ({ isOpen, onClose, onSubmit, editingProduct }: Prod
             )}
           </div>
 
+          {/* Sector de Organización de Desarrollo: PC, GitHub, Vercel & AI Studio */}
+          <div className="p-4 bg-gradient-to-br from-indigo-500/5 via-sky-500/5 to-slate-500/10 rounded-2xl border border-indigo-200/70 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-700 flex items-center justify-center font-bold">
+                  <GitBranch size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                    Organización DevOps & Repositorios
+                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded uppercase">
+                      GitHub & Deploy
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-neutral-500">Carpeta local en tu PC, GitHub, Vercel y cuenta creadora de AI Studio</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDevOpsOpen(!isDevOpsOpen)}
+                className="text-xs text-indigo-700 hover:text-indigo-900 font-semibold underline"
+              >
+                {isDevOpsOpen ? 'Ocultar campos' : 'Mostrar campos'}
+              </button>
+            </div>
+
+            {isDevOpsOpen && (
+              <div className="space-y-3.5 pt-1">
+                {/* Carpeta en PC */}
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Folder size={14} className="text-indigo-600" />
+                      Carpeta de mi PC conectada a GitHub
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-normal">Ruta local de tu disco</span>
+                  </label>
+                  <input 
+                    name="localFolderPath" 
+                    defaultValue={editingProduct?.localFolderPath || ''} 
+                    className="input-field py-2 text-xs font-mono bg-white text-neutral-800 placeholder:text-neutral-400" 
+                    placeholder="Ej: C:\Proyectos\Nova-AJ\mi-sistema o /home/usuario/proyectos/mi-sistema" 
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    Guarda la ruta de la carpeta donde tienes el código para copiarla rápidamente a tu terminal o editor.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Repositorio GitHub */}
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center gap-1.5">
+                      <GitBranch size={14} className="text-neutral-800" />
+                      Nombre de Repositorio GitHub
+                    </label>
+                    <input 
+                      name="githubRepo" 
+                      defaultValue={editingProduct?.githubRepo || ''} 
+                      className="input-field py-2 text-xs font-mono bg-white text-neutral-800" 
+                      placeholder="usuario/nombre-del-repo" 
+                    />
+                  </div>
+
+                  {/* Proyecto Vercel */}
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center gap-1.5">
+                      <Cloud size={14} className="text-sky-600" />
+                      Nombre de Proyecto Vercel
+                    </label>
+                    <input 
+                      name="vercelProject" 
+                      defaultValue={editingProduct?.vercelProject || ''} 
+                      className="input-field py-2 text-xs font-mono bg-white text-neutral-800" 
+                      placeholder="nombre-proyecto-vercel" 
+                    />
+                  </div>
+                </div>
+
+                {/* Usuario Google AI Studio */}
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Bot size={14} className="text-indigo-600" />
+                      Usuario / Cuenta de AI Studio Creadora
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-normal">Cuenta de Google asociada</span>
+                  </label>
+                  <input 
+                    name="aiStudioAccount" 
+                    defaultValue={editingProduct?.aiStudioAccount || 'ajnovasistemas@gmail.com'} 
+                    className="input-field py-2 text-xs font-mono bg-white text-neutral-800" 
+                    placeholder="ajnovasistemas@gmail.com" 
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sector Ficha de Venta y Publicidad en Redes Sociales */}
+          <div className="p-4 bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-rose-500/5 rounded-2xl border border-orange-200/80 space-y-3.5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-brand-orange/20 text-brand-orange flex items-center justify-center font-bold">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                    Ficha de Venta & Publicidad en Redes
+                    <span className="px-2 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-bold rounded uppercase">
+                      Marketing
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-neutral-500">Datos para la página de venta que verá el cliente desde anuncios</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Propuesta de Valor / Frase Gancho (Tagline)
+                </label>
+                <input 
+                  name="tagline" 
+                  defaultValue={editingProduct?.tagline || ''} 
+                  className="input-field py-1.5 text-xs bg-white" 
+                  placeholder="Ej: Automatiza tus ventas, evita faltantes y controla tu stock desde el celular" 
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                    Precio Regular Tachado ($) (Efecto Oferta)
+                  </label>
+                  <input 
+                    name="originalPrice" 
+                    type="number"
+                    defaultValue={editingProduct?.originalPrice || ''} 
+                    className="input-field py-1.5 text-xs bg-white" 
+                    placeholder="Ej: 120000" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                    Insignia / Badge de Venta
+                  </label>
+                  <input 
+                    name="badge" 
+                    defaultValue={editingProduct?.badge || 'Oferta Especial Redes'} 
+                    className="input-field py-1.5 text-xs bg-white" 
+                    placeholder="Ej: Más Vendido / Oferta Redes" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                  Público Objetivo / Rubros Ideales
+                </label>
+                <input 
+                  name="targetAudience" 
+                  defaultValue={editingProduct?.targetAudience || ''} 
+                  className="input-field py-1.5 text-xs bg-white" 
+                  placeholder="Ej: Ferreterías, distribuidoras, comercios mayoristas y minoristas" 
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 pt-1">
             <input 
               type="checkbox" 
@@ -422,15 +593,19 @@ export const SaleModal = ({
                 className="input-field"
               >
                 <option value="">Elegir un cliente...</option>
-                {(clients || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {(clients || []).map((c, idx) => (
+                  <option key={`sale-client-${c.id || idx}-${idx}`} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Agregar Productos</label>
               <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                {(products || []).map(p => (
-                  <div key={p.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                {(products || []).map((p, idx) => (
+                  <div key={`sale-prod-pick-${p.id || idx}-${idx}`} className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl border border-neutral-100">
                     <div>
                       <p className="text-sm font-bold">{p.name}</p>
                       <p className="text-xs text-neutral-500">${p.price} | Stock: {p.stock}</p>
@@ -456,8 +631,8 @@ export const SaleModal = ({
               </span>
             </h4>
             <div className="flex-1 space-y-3 overflow-y-auto mb-6 pr-2">
-              {(saleItems || []).map(item => (
-                <div key={item.productId} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm">
+              {(saleItems || []).map((item, idx) => (
+                <div key={`sale-cart-item-${item.productId}-${idx}`} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm">
                   <div className="flex-1">
                     <p className="text-sm font-bold">{item.productName}</p>
                     <p className="text-xs text-neutral-500">{item.quantity} x ${item.price}</p>

@@ -73,7 +73,7 @@ export const Sidebar = ({ activeView, setView, onLogoutAdmin, onChangePassword }
         <nav className="flex-1 px-4 py-6 space-y-2">
           {menuItems.map((item) => (
             <button
-              key={item.id}
+              key={`sidebar-nav-${item.id}`}
               onClick={() => handleNav(item.id as View)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeView === item.id 

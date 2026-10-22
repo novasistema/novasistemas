@@ -161,7 +161,7 @@ export const SubscriptionsView = ({
         <div className="flex flex-wrap bg-neutral-100 p-1 rounded-xl max-w-full overflow-x-auto gap-1">
           {['todos', 'activa', 'vencida', 'pendiente', 'suspendida'].map((status) => (
             <button
-              key={status}
+              key={`sub-filter-tab-${status}`}
               onClick={() => setStatusFilter(status)}
               className={`px-4 py-2 text-xs font-bold rounded-lg uppercase transition-all ${
                 statusFilter === status 
@@ -206,7 +206,7 @@ export const SubscriptionsView = ({
               {filtered.map((sub, idx) => {
                 const showPass = visiblePasswords[sub.id];
                 return (
-                <tr key={`${sub.id}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
+                <tr key={`sub-table-row-${sub.id || idx}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-bold text-neutral-900">{sub.clientName}</div>
                   </td>

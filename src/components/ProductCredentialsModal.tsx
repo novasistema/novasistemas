@@ -13,7 +13,12 @@ import {
   EyeOff, 
   Edit2, 
   FileText,
-  Lock
+  Lock,
+  Folder,
+  GitBranch,
+  Cloud,
+  Bot,
+  Terminal
 } from 'lucide-react';
 import { Product } from '../types';
 
@@ -64,7 +69,13 @@ export const ProductCredentialsModal: React.FC<ProductCredentialsModalProps> = (
       product.accessNotes ? `\n📝 Notas de Acceso:\n${product.accessNotes}` : '',
       product.extraCredentials && product.extraCredentials.length > 0 ? (
         '\n--- OTROS ACCESOS ---\n' + product.extraCredentials.map(c => `• ${c.title}: ${c.user} / ${c.password} ${c.notes ? `(${c.notes})` : ''}`).join('\n')
-      ) : ''
+      ) : '',
+      '',
+      '--- DEVOPS & DESARROLLO (GITHUB / VERCEL / PC) ---',
+      product.localFolderPath ? `💻 Carpeta PC: ${product.localFolderPath}` : '',
+      product.githubRepo ? `🐙 Repositorio GitHub: ${product.githubRepo}` : '',
+      product.vercelProject ? `🔺 Proyecto Vercel: ${product.vercelProject}` : '',
+      product.aiStudioAccount ? `🤖 Usuario AI Studio: ${product.aiStudioAccount}` : '',
     ].filter(Boolean).join('\n');
 
     await copyToClipboard(text, 'all');
@@ -74,9 +85,13 @@ export const ProductCredentialsModal: React.FC<ProductCredentialsModalProps> = (
     product.adminUser || 
     product.adminPassword || 
     product.creatorUser || 
-    product.creatorPassword ||
+    product.creatorPassword || 
     product.adminLoginUrl ||
     product.accessNotes ||
+    product.localFolderPath ||
+    product.githubRepo ||
+    product.vercelProject ||
+    product.aiStudioAccount ||
     (product.extraCredentials && product.extraCredentials.length > 0)
   );
 
@@ -351,7 +366,7 @@ export const ProductCredentialsModal: React.FC<ProductCredentialsModalProps> = (
               <div className="space-y-2">
                 <p className="text-xs font-bold text-neutral-700">Accesos y Cuentas Adicionales</p>
                 {product.extraCredentials.map((c, i) => (
-                  <div key={c.id || i} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/60 flex items-center justify-between text-xs">
+                  <div key={`extra-cred-${product.id || 'prod'}-${c.id || i}-${i}`} className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/60 flex items-center justify-between text-xs">
                     <div>
                       <span className="font-bold text-neutral-800">{c.title}:</span>{' '}
                       <span className="font-mono text-neutral-600">{c.user}</span> / <span className="font-mono text-neutral-600">{c.password}</span>
@@ -368,6 +383,146 @@ export const ProductCredentialsModal: React.FC<ProductCredentialsModalProps> = (
                 ))}
               </div>
             )}
+
+            {/* Box 3: DevOps, GitHub, Vercel & PC Folder */}
+            <div className="p-4 bg-gradient-to-br from-indigo-50/70 via-slate-50/40 to-sky-50/40 rounded-2xl border border-indigo-100/90 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 bg-indigo-600 text-white rounded-lg flex items-center justify-center shadow-sm">
+                    <GitBranch size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-indigo-950">Organización DevOps & Repositorios</h4>
+                    <p className="text-[10px] text-indigo-700">Carpeta local en PC, GitHub, Vercel y cuenta creadora en AI Studio</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded">
+                  Deploy & Código
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {/* 1. Carpeta local en PC */}
+                <div className="bg-white/95 p-3 rounded-xl border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="min-w-0 flex items-start gap-2.5">
+                    <Folder size={17} className="text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <span className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                        Carpeta en tu PC (para GitHub)
+                      </span>
+                      <span className="text-xs font-mono font-semibold text-neutral-800 break-all block">
+                        {product.localFolderPath || <span className="text-neutral-400 italic">No configurada</span>}
+                      </span>
+                    </div>
+                  </div>
+                  {product.localFolderPath && (
+                    <button
+                      onClick={() => copyToClipboard(product.localFolderPath || '', 'folder')}
+                      className="px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg flex items-center gap-1.5 self-end sm:self-center shrink-0 transition-colors"
+                      title="Copiar ruta de la carpeta para terminal o explorador"
+                    >
+                      {copiedKey === 'folder' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                      <span>{copiedKey === 'folder' ? '¡Ruta Copiada!' : 'Copiar Ruta'}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* 2 & 3. GitHub & Vercel */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* GitHub Repo */}
+                  <div className="bg-white/95 p-2.5 rounded-xl border border-indigo-100 flex flex-col justify-between gap-2">
+                    <div className="min-w-0 flex items-start gap-2">
+                      <GitBranch size={16} className="text-neutral-800 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <span className="block text-[10px] font-bold text-neutral-400 uppercase">Repositorio GitHub</span>
+                        <span className="text-xs font-mono font-semibold text-neutral-800 truncate block">
+                          {product.githubRepo || <span className="text-neutral-400 italic">No configurado</span>}
+                        </span>
+                      </div>
+                    </div>
+                    {product.githubRepo && (
+                      <div className="flex items-center gap-1.5 self-end mt-1">
+                        <button
+                          onClick={() => copyToClipboard(product.githubRepo || '', 'github')}
+                          className="px-2 py-1 text-[11px] font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded flex items-center gap-1"
+                          title="Copiar nombre de repositorio"
+                        >
+                          {copiedKey === 'github' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          <span>{copiedKey === 'github' ? 'Copiado' : 'Copiar'}</span>
+                        </button>
+                        <a
+                          href={product.githubRepo.startsWith('http') ? product.githubRepo : `https://github.com/${product.githubRepo}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-1 text-[11px] font-semibold text-white bg-neutral-900 hover:bg-black rounded flex items-center gap-1"
+                        >
+                          <span>GitHub</span>
+                          <ExternalLink size={11} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Vercel Project */}
+                  <div className="bg-white/95 p-2.5 rounded-xl border border-indigo-100 flex flex-col justify-between gap-2">
+                    <div className="min-w-0 flex items-start gap-2">
+                      <Cloud size={16} className="text-sky-600 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <span className="block text-[10px] font-bold text-neutral-400 uppercase">Proyecto Vercel</span>
+                        <span className="text-xs font-mono font-semibold text-neutral-800 truncate block">
+                          {product.vercelProject || <span className="text-neutral-400 italic">No configurado</span>}
+                        </span>
+                      </div>
+                    </div>
+                    {product.vercelProject && (
+                      <div className="flex items-center gap-1.5 self-end mt-1">
+                        <button
+                          onClick={() => copyToClipboard(product.vercelProject || '', 'vercel')}
+                          className="px-2 py-1 text-[11px] font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded flex items-center gap-1"
+                          title="Copiar proyecto Vercel"
+                        >
+                          {copiedKey === 'vercel' ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                          <span>{copiedKey === 'vercel' ? 'Copiado' : 'Copiar'}</span>
+                        </button>
+                        <a
+                          href={
+                            product.vercelProject.startsWith('http') 
+                              ? product.vercelProject 
+                              : (product.vercelProject.includes('.') ? `https://${product.vercelProject}` : `https://${product.vercelProject}.vercel.app`)
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2 py-1 text-[11px] font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded flex items-center gap-1"
+                        >
+                          <span>Vercel</span>
+                          <ExternalLink size={11} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Cuenta Google AI Studio */}
+                <div className="bg-white/95 p-2.5 rounded-xl border border-indigo-100 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex items-center gap-2">
+                    <Bot size={16} className="text-purple-600 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="block text-[10px] font-bold text-neutral-400 uppercase">Usuario / Creador AI Studio</span>
+                      <span className="text-xs font-mono font-semibold text-neutral-800 truncate block">
+                        {product.aiStudioAccount || 'ajnovasistemas@gmail.com'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(product.aiStudioAccount || 'ajnovasistemas@gmail.com', 'aiStudio')}
+                    className="p-1.5 text-neutral-400 hover:text-purple-600 rounded-lg hover:bg-purple-50 transition-colors shrink-0"
+                    title="Copiar cuenta de AI Studio"
+                  >
+                    {copiedKey === 'aiStudio' ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

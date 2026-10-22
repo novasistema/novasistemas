@@ -14,6 +14,19 @@ const STORAGE_KEYS = {
   ADMIN_PASSWORD: 'novasistema_admin_password',
 };
 
+const deduplicateById = <T extends { id?: string }>(items: T[]): T[] => {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  items.forEach((item, index) => {
+    const key = item.id || `item-${index}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push({ ...item, id: key });
+    }
+  });
+  return result;
+};
+
 // Default seed data
 const DEFAULT_BANNERS: Banner[] = [
   {
@@ -53,7 +66,11 @@ const DEFAULT_PRODUCTS: Product[] = [
     adminPassword: 'ERPAdmin#2024',
     creatorUser: 'creador@nova-aj.app',
     creatorPassword: 'NovaMasterKey*99',
-    accessNotes: 'Acceso total como Creador con privilegios raíz y configuración de módulos.'
+    accessNotes: 'Acceso total como Creador con privilegios raíz y configuración de módulos.',
+    localFolderPath: 'C:\\Proyectos\\Nova-AJ\\sistema-erp-facturacion',
+    githubRepo: 'ajnovasistemas/nova-erp-facturacion',
+    vercelProject: 'demo-erp-nova-aj',
+    aiStudioAccount: 'ajnovasistemas@gmail.com'
   },
   { 
     id: '2', 
@@ -73,7 +90,11 @@ const DEFAULT_PRODUCTS: Product[] = [
     adminPassword: 'Ferreteria2024*',
     creatorUser: 'creador_ferreteria',
     creatorPassword: 'CreadorFerre#2024',
-    accessNotes: 'PIN de apertura de caja por defecto: 1234.'
+    accessNotes: 'PIN de apertura de caja por defecto: 1234.',
+    localFolderPath: 'C:\\Proyectos\\Nova-AJ\\ferreterias-corralones',
+    githubRepo: 'ajnovasistemas/ferreterias-corralones-pos',
+    vercelProject: 'demo-ferreteria-nova-aj',
+    aiStudioAccount: 'ajnovasistemas@gmail.com'
   },
   { 
     id: '3', 
@@ -93,7 +114,11 @@ const DEFAULT_PRODUCTS: Product[] = [
     adminPassword: 'PreVentaPass!88',
     creatorUser: 'creador@nova-aj.app',
     creatorPassword: 'MobileMaster#77',
-    accessNotes: 'Token API de sincronización activa en servidor central.'
+    accessNotes: 'Token API de sincronización activa en servidor central.',
+    localFolderPath: 'C:\\Proyectos\\Nova-AJ\\preventa-distribucion-app',
+    githubRepo: 'ajnovasistemas/preventa-distribucion-mobile',
+    vercelProject: 'demo-preventa-nova-aj',
+    aiStudioAccount: 'ajnovasistemas@gmail.com'
   },
   { 
     id: '4', 
@@ -111,7 +136,11 @@ const DEFAULT_PRODUCTS: Product[] = [
     adminPassword: 'TurnosAdmin2024',
     creatorUser: 'creador_turnos',
     creatorPassword: 'NovaTurnos#2024',
-    accessNotes: 'Clave de webhook de WhatsApp disponible en panel de creador.'
+    accessNotes: 'Clave de webhook de WhatsApp disponible en panel de creador.',
+    localFolderPath: 'C:\\Proyectos\\Nova-AJ\\turnos-abonos-recurrentes',
+    githubRepo: 'ajnovasistemas/turnos-abonos-web',
+    vercelProject: 'demo-turnos-nova-aj',
+    aiStudioAccount: 'ajnovasistemas@gmail.com'
   },
 ];
 
@@ -203,21 +232,25 @@ export const storageService = {
         const items = snapshot.docs.map(docSnap => {
           const data = docSnap.data() as Product;
           const seed = DEFAULT_PRODUCTS.find(p => p.id === data.id);
-          if (seed && !data.adminUser && !data.creatorUser && !data.adminPassword) {
+          if (seed) {
             return {
               ...seed,
               ...data,
-              adminLoginUrl: data.adminLoginUrl || seed.adminLoginUrl,
-              adminUser: data.adminUser || seed.adminUser,
-              adminPassword: data.adminPassword || seed.adminPassword,
-              creatorUser: data.creatorUser || seed.creatorUser,
-              creatorPassword: data.creatorPassword || seed.creatorPassword,
-              accessNotes: data.accessNotes || seed.accessNotes,
+              adminLoginUrl: data.adminLoginUrl !== undefined ? data.adminLoginUrl : seed.adminLoginUrl,
+              adminUser: data.adminUser !== undefined ? data.adminUser : seed.adminUser,
+              adminPassword: data.adminPassword !== undefined ? data.adminPassword : seed.adminPassword,
+              creatorUser: data.creatorUser !== undefined ? data.creatorUser : seed.creatorUser,
+              creatorPassword: data.creatorPassword !== undefined ? data.creatorPassword : seed.creatorPassword,
+              accessNotes: data.accessNotes !== undefined ? data.accessNotes : seed.accessNotes,
+              localFolderPath: data.localFolderPath !== undefined ? data.localFolderPath : seed.localFolderPath,
+              githubRepo: data.githubRepo !== undefined ? data.githubRepo : seed.githubRepo,
+              vercelProject: data.vercelProject !== undefined ? data.vercelProject : seed.vercelProject,
+              aiStudioAccount: data.aiStudioAccount !== undefined ? data.aiStudioAccount : seed.aiStudioAccount,
             };
           }
           return data;
         });
-        callback(items);
+        callback(deduplicateById(items));
       }
     }, (error) => {
       console.error('Firestore products error:', error);
@@ -259,7 +292,7 @@ export const storageService = {
         await batch.commit();
       } else {
         const items = snapshot.docs.map(doc => doc.data() as Client);
-        callback(items);
+        callback(deduplicateById(items));
       }
     }, (error) => {
       console.error('Firestore clients error:', error);
@@ -293,7 +326,7 @@ export const storageService = {
       const items = snapshot.docs.map(doc => doc.data() as Sale);
       // Sort by date desc
       items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      callback(items);
+      callback(deduplicateById(items));
     }, (error) => {
       console.error('Firestore sales error:', error);
     });
@@ -331,7 +364,7 @@ export const storageService = {
         await batch.commit();
       } else {
         const items = snapshot.docs.map(doc => doc.data() as Banner);
-        callback(items);
+        callback(deduplicateById(items));
       }
     }, (error) => {
       console.error('Firestore banners error:', error);
@@ -371,7 +404,7 @@ export const storageService = {
         await batch.commit();
       } else {
         const items = snapshot.docs.map(doc => doc.data() as Subscription);
-        callback(items);
+        callback(deduplicateById(items));
       }
     }, (error) => {
       console.error('Firestore subscriptions error:', error);

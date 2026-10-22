@@ -45,6 +45,19 @@ export interface Product {
   creatorPassword?: string;
   accessNotes?: string;
   extraCredentials?: ProductCredential[];
+  // Organización técnica: PC local, GitHub, Vercel y Google AI Studio
+  localFolderPath?: string; // Carpeta en PC local (ej: C:\Proyectos\nova-erp)
+  githubRepo?: string;      // Repositorio GitHub (ej: ajnovasistemas/nova-erp)
+  vercelProject?: string;   // Nombre o URL de proyecto Vercel (ej: nova-erp-demo)
+  aiStudioAccount?: string; // Usuario / Cuenta Google AI Studio (ej: ajnovasistemas@gmail.com)
+  // Ficha de venta y landing de producto para redes sociales
+  tagline?: string;         // Frase de impacto o propuesta de valor
+  originalPrice?: number;   // Precio tachado de oferta para psicología de venta
+  badge?: string;           // Ej: "Más Vendido", "Oferta Lanzamiento", "Recomendado"
+  targetAudience?: string;  // A quién va dirigido (Comercios, PYMEs, etc.)
+  features?: string[];      // Lista de módulos o características destacadas
+  benefits?: string[];      // Beneficios clave / problemas que resuelve
+  videoUrl?: string;        // URL de video demostrativo
 }
 
 export interface SaleItem {

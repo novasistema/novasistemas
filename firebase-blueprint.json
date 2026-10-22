@@ -23,7 +23,11 @@
         "creatorUser": { "type": "string" },
         "creatorPassword": { "type": "string" },
         "accessNotes": { "type": "string" },
-        "extraCredentials": { "type": "array" }
+        "extraCredentials": { "type": "array" },
+        "localFolderPath": { "type": "string" },
+        "githubRepo": { "type": "string" },
+        "vercelProject": { "type": "string" },
+        "aiStudioAccount": { "type": "string" }
       },
       "required": ["name", "price", "sku"]
     },

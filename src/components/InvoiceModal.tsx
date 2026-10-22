@@ -141,8 +141,8 @@ export const InvoiceModal = ({ isOpen, onClose, sale, client }: InvoiceModalProp
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
-                  {sale.items.map((item, i) => (
-                    <tr key={i} className="text-sm">
+                  {(sale.items || []).map((item, i) => (
+                    <tr key={`inv-${sale.id || 'sale'}-item-${item.productId || i}-${i}`} className="text-sm">
                       <td className="py-4 font-medium">{item.productName}</td>
                       <td className="py-4 text-center">{item.quantity}</td>
                       <td className="py-4 text-right">${item.price.toLocaleString()}</td>
