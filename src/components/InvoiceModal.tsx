@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { X, Printer, Download, FileText, MessageSquare } from 'lucide-react';
 import { Sale, Client } from '../types';
+import { NovaAjLogo } from './NovaAjLogo';
 
 interface InvoiceModalProps {
   isOpen: boolean;
@@ -100,9 +101,9 @@ export const InvoiceModal = ({ isOpen, onClose, sale, client }: InvoiceModalProp
 
               <div className="flex justify-between items-start mb-12">
                 <div>
-                  <h1 className="text-3xl font-black text-brand-orange mb-1">NOVA AJ</h1>
+                  <NovaAjLogo variant="horizontal" size="md" className="mb-3" />
                   <p className="text-sm font-bold text-neutral-800">Sistemas Digitales & Soluciones IT</p>
-                  <p className="text-xs text-neutral-500 mt-2">Calle Falsa 123, Ciudad Autónoma de Buenos Aires</p>
+                  <p className="text-xs text-neutral-500 mt-1">Calle Falsa 123, Ciudad Autónoma de Buenos Aires</p>
                   <p className="text-xs text-neutral-500">Tel: +54 11 1234-5678 | Email: hola@nova-aj.com</p>
                 </div>
                 <div className="text-right pt-20">

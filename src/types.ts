@@ -24,6 +24,17 @@ export interface ProductCredential {
   notes?: string;
 }
 
+export interface ProductPlan {
+  id: string;
+  name: string;
+  price: number;
+  period?: 'Pago Único' | 'Mensual' | 'Anual';
+  badge?: string;
+  isPopular?: boolean;
+  features: string[];
+  description?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -58,6 +69,19 @@ export interface Product {
   features?: string[];      // Lista de módulos o características destacadas
   benefits?: string[];      // Beneficios clave / problemas que resuelve
   videoUrl?: string;        // URL de video demostrativo
+  // 3 Planes con distintos precios y lo que lleva cada uno
+  plans?: ProductPlan[];
+}
+
+export interface Seller {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  commissionRate: number; // Porcentaje de comisión por venta (ej: 15)
+  status: 'Activo' | 'Inactivo';
+  notes?: string;
+  createdAt: string;
 }
 
 export interface SaleItem {
@@ -75,6 +99,11 @@ export interface Sale {
   items: SaleItem[];
   total: number;
   date: string;
+  sellerId?: string;
+  sellerName?: string;
+  commissionRate?: number;
+  commissionAmount?: number;
+  commissionPaid?: boolean;
 }
 
 export interface Banner {
@@ -101,4 +130,17 @@ export interface Subscription {
   status: 'Activa' | 'Suspendida' | 'Vencida' | 'Pendiente';
 }
 
-export type View = 'landing' | 'dashboard' | 'clients' | 'products' | 'sales' | 'banners' | 'subscriptions';
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'sale' | 'lead' | 'info';
+  timestamp: string;
+  read: boolean;
+  amount?: number;
+  productName?: string;
+  clientName?: string;
+  phone?: string;
+}
+
+export type View = 'landing' | 'dashboard' | 'clients' | 'products' | 'sales' | 'sellers' | 'banners' | 'subscriptions';

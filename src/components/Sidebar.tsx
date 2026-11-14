@@ -10,9 +10,11 @@ import {
   LogOut,
   Calendar,
   KeyRound,
-  ShieldCheck
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 import { View } from '../types';
+import { NovaAjLogo } from './NovaAjLogo';
 
 interface SidebarProps {
   activeView: View;
@@ -29,6 +31,7 @@ export const Sidebar = ({ activeView, setView, onLogoutAdmin, onChangePassword }
     { id: 'clients', label: 'Clientes', icon: Users },
     { id: 'products', label: 'Sistemas & Portafolio', icon: Package },
     { id: 'sales', label: 'Ventas', icon: ShoppingCart },
+    { id: 'sellers', label: 'Vendedores', icon: UserCheck },
     { id: 'subscriptions', label: 'Suscripciones', icon: Calendar },
     { id: 'banners', label: 'Anuncios', icon: Megaphone },
   ];
@@ -60,14 +63,8 @@ export const Sidebar = ({ activeView, setView, onLogoutAdmin, onChangePassword }
         w-64 h-screen bg-neutral-900 text-white flex flex-col fixed left-0 top-0 z-[55] transition-transform duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg shadow-brand-orange/20">
-            <span className="text-xl font-bold">N</span>
-          </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight">Nova AJ</h1>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-widest">Sistema Digital</p>
-          </div>
+        <div className="p-4 pt-5 flex justify-center border-b border-white/5">
+          <NovaAjLogo variant="full" size="sm" className="w-full" />
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">

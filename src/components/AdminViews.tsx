@@ -24,7 +24,10 @@ import {
   Cloud,
   Bot,
   ExternalLink,
-  Eye
+  Eye,
+  EyeOff,
+  Power,
+  UserCheck
 } from 'lucide-react';
 import { Client, Product, Sale, Banner, View } from '../types';
 import { ProductCredentialsModal } from './ProductCredentialsModal';
@@ -254,6 +257,7 @@ interface ProductsViewProps {
   setEditingProduct: (p: Product | null) => void;
   setIsProductModalOpen: (o: boolean) => void;
   handleDeleteProduct: (id: string) => void;
+  handleToggleProductVisibility?: (id: string) => void;
   onViewSalesLanding?: (p: Product) => void;
 }
 
@@ -264,22 +268,33 @@ export const ProductsView = ({
   setEditingProduct, 
   setIsProductModalOpen, 
   handleDeleteProduct,
+  handleToggleProductVisibility,
   onViewSalesLanding 
 }: ProductsViewProps) => {
   const [copiedProductId, setCopiedProductId] = useState<string | null>(null);
   const [copiedTextKey, setCopiedTextKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'commercial' | 'devops'>('commercial');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'active' | 'hidden'>('all');
   const [selectedCredentialsProduct, setSelectedCredentialsProduct] = useState<Product | null>(null);
 
-  const filtered = (products || []).filter(p => 
-    (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.localFolderPath || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.githubRepo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.vercelProject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.aiStudioAccount || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const activeCount = (products || []).filter(p => p.inPortfolio !== false).length;
+  const hiddenCount = (products || []).filter(p => p.inPortfolio === false).length;
+
+  const filtered = (products || []).filter(p => {
+    const matchesSearch =
+      (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.localFolderPath || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.githubRepo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.vercelProject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.aiStudioAccount || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchesSearch) return false;
+    if (visibilityFilter === 'active') return p.inPortfolio !== false;
+    if (visibilityFilter === 'hidden') return p.inPortfolio === false;
+    return true;
+  });
 
   const copyText = async (text: string, keyName: string) => {
     if (!text) return;
@@ -382,11 +397,41 @@ export const ProductsView = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          {activeTab === 'devops' && (
+          {activeTab === 'devops' ? (
             <span className="text-xs text-indigo-700 font-semibold bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 self-start sm:self-auto shrink-0 flex items-center gap-1.5">
               <Folder size={14} />
               <span>Haz clic en cualquier botón "Copiar" para usar la ruta en tu terminal</span>
             </span>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-neutral-200 self-start sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => setVisibilityFilter('all')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  visibilityFilter === 'all' ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                Todas ({products.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibilityFilter('active')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  visibilityFilter === 'active' ? 'bg-emerald-600 text-white' : 'text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                Visibles ({activeCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibilityFilter('hidden')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                  visibilityFilter === 'hidden' ? 'bg-neutral-600 text-white' : 'text-neutral-600 hover:bg-neutral-100'
+                }`}
+              >
+                Desactivadas ({hiddenCount})
+              </button>
+            </div>
           )}
         </div>
 
@@ -420,12 +465,24 @@ export const ProductsView = ({
                     (product.extraCredentials && product.extraCredentials.length > 0)
                   );
 
+                  const isVisible = product.inPortfolio !== false;
+
                   return (
-                    <tr key={`admin-prod-comm-${product.id || idx}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
+                    <tr key={`admin-prod-comm-${product.id || idx}-${idx}`} className={`transition-colors ${isVisible ? 'hover:bg-neutral-50/50' : 'bg-neutral-50/80 hover:bg-neutral-100/60'}`}>
                       <td className="px-6 py-4">
-                        <div className="font-bold text-neutral-900">{product.name}</div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`font-bold ${isVisible ? 'text-neutral-900' : 'text-neutral-400 line-through'}`}>
+                            {product.name}
+                          </span>
+                          {!isVisible && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-neutral-200/80 text-neutral-600">
+                              <EyeOff size={10} />
+                              Oculta en Web
+                            </span>
+                          )}
+                        </div>
                         {product.description && (
-                          <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2 max-w-md">{product.description}</p>
+                          <p className={`text-xs mt-0.5 line-clamp-2 max-w-md ${isVisible ? 'text-neutral-500' : 'text-neutral-400'}`}>{product.description}</p>
                         )}
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                           <span className="text-[11px] text-neutral-400 font-mono">SKU: {product.sku}</span>
@@ -468,13 +525,21 @@ export const ProductsView = ({
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
-                          product.inPortfolio !== false 
-                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
-                            : 'bg-neutral-100 text-neutral-400'
-                        }`}>
-                          {product.inPortfolio !== false ? 'Visible en Web' : 'Oculto'}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleProductVisibility && handleToggleProductVisibility(product.id)}
+                          title={isVisible ? 'Clic para desactivar y ocultar de la web' : 'Clic para activar y mostrar en la web'}
+                          className={`inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                            isVisible
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-neutral-100 text-neutral-600 border-neutral-200 hover:bg-neutral-200'
+                          }`}
+                        >
+                          <span className={`w-7 h-4 rounded-full p-0.5 flex items-center transition-colors ${isVisible ? 'bg-emerald-500 justify-end' : 'bg-neutral-400 justify-start'}`}>
+                            <span className="w-3 h-3 rounded-full bg-white shadow-sm" />
+                          </span>
+                          <span>{isVisible ? 'Activa / Visible' : 'Desactivada'}</span>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-bold text-neutral-900">${product.price.toLocaleString()}</div>
@@ -544,6 +609,20 @@ export const ProductsView = ({
                           >
                             {copiedProductId === product.id ? <Check size={18} /> : <Share2 size={18} />}
                           </button>
+                          {handleToggleProductVisibility && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleProductVisibility(product.id)}
+                              className={`p-2 rounded-lg transition-all ${
+                                isVisible
+                                  ? 'text-emerald-600 hover:text-rose-600 hover:bg-rose-50'
+                                  : 'text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                              title={isVisible ? 'Desactivar / Ocultar aplicación del portafolio' : 'Activar / Mostrar aplicación en el portafolio'}
+                            >
+                              {isVisible ? <Power size={18} /> : <EyeOff size={18} />}
+                            </button>
+                          )}
                           <button 
                             onClick={() => { setEditingProduct(product); setIsProductModalOpen(true); }}
                             className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"
@@ -588,11 +667,22 @@ export const ProductsView = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 text-xs">
-                {filtered.map((product, idx) => (
-                  <tr key={`admin-prod-devops-${product.id || idx}-${idx}`} className="hover:bg-neutral-50/60 transition-colors">
+                {filtered.map((product, idx) => {
+                  const isVisible = product.inPortfolio !== false;
+                  return (
+                  <tr key={`admin-prod-devops-${product.id || idx}-${idx}`} className={`transition-colors ${isVisible ? 'hover:bg-neutral-50/60' : 'bg-neutral-50/80 opacity-80'}`}>
                     {/* Sistema */}
                     <td className="px-6 py-4">
-                      <div className="font-bold text-neutral-900 text-sm">{product.name}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-bold text-sm ${isVisible ? 'text-neutral-900' : 'text-neutral-500 line-through'}`}>
+                          {product.name}
+                        </span>
+                        {!isVisible && (
+                          <span className="px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-600 text-[10px] font-bold uppercase">
+                            Oculta
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="font-mono text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded font-bold">
                           {product.sku}
@@ -733,6 +823,20 @@ export const ProductsView = ({
                     {/* Acciones */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-1.5">
+                        {handleToggleProductVisibility && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleProductVisibility(product.id)}
+                            className={`p-2 rounded-lg transition-all ${
+                              isVisible
+                                ? 'text-emerald-600 hover:text-rose-600 hover:bg-rose-50'
+                                : 'text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                            title={isVisible ? 'Desactivar / Ocultar de la web' : 'Activar / Mostrar en la web'}
+                          >
+                            {isVisible ? <Power size={16} /> : <EyeOff size={16} />}
+                          </button>
+                        )}
                         <button 
                           onClick={() => setSelectedCredentialsProduct(product)}
                           className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
@@ -757,7 +861,8 @@ export const ProductsView = ({
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-neutral-400 italic">
@@ -791,15 +896,16 @@ interface SalesViewProps {
   sales: Sale[];
   setIsSaleModalOpen: (o: boolean) => void;
   onViewInvoice: (s: Sale) => void;
+  onAssignSeller?: (s: Sale) => void;
 }
 
-export const SalesView = ({ sales, setIsSaleModalOpen, onViewInvoice }: SalesViewProps) => {
+export const SalesView = ({ sales, setIsSaleModalOpen, onViewInvoice, onAssignSeller }: SalesViewProps) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Ventas</h2>
-          <p className="text-neutral-500 mt-1">Historial de transacciones y facturación.</p>
+          <p className="text-neutral-500 mt-1">Historial de transacciones, vendedores asignados y facturación.</p>
         </div>
         <button onClick={() => setIsSaleModalOpen(true)} className="btn-primary">
           <Plus size={20} />
@@ -815,7 +921,8 @@ export const SalesView = ({ sales, setIsSaleModalOpen, onViewInvoice }: SalesVie
                 <th className="px-6 py-4">ID Venta</th>
                 <th className="px-6 py-4">Fecha</th>
                 <th className="px-6 py-4">Cliente</th>
-                <th className="px-6 py-4">Items</th>
+                <th className="px-6 py-4">Sistemas / Items</th>
+                <th className="px-6 py-4">Vendedor & Comisión</th>
                 <th className="px-6 py-4 text-right">Total</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
@@ -824,22 +931,59 @@ export const SalesView = ({ sales, setIsSaleModalOpen, onViewInvoice }: SalesVie
               {(sales || []).map((sale, idx) => (
                 <tr key={`sales-row-${sale.id || idx}-${idx}`} className="hover:bg-neutral-50/50 transition-colors">
                   <td className="px-6 py-4 font-mono text-xs text-neutral-500">#{sale.id.slice(-6)}</td>
-                  <td className="px-6 py-4 text-neutral-600">{new Date(sale.date).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-neutral-600 text-sm">{new Date(sale.date).toLocaleString()}</td>
                   <td className="px-6 py-4 font-medium">{sale.clientName}</td>
-                  <td className="px-6 py-4 text-neutral-600">
-                    {(sale.items || []).length} {(sale.items || []).length === 1 ? 'producto' : 'productos'}
+                  <td className="px-6 py-4 text-neutral-600 text-xs">
+                    <div className="font-semibold text-neutral-800">
+                      {(sale.items || []).map(i => i.productName).join(', ') || `${(sale.items || []).length} productos`}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {sale.sellerName ? (
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-orange-50 text-brand-orange border border-orange-200/80 rounded-md text-xs font-bold">
+                          {sale.sellerName}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-700">
+                          ${(sale.commissionAmount || 0).toLocaleString()} ({sale.commissionRate || 0}%)
+                        </span>
+                      </div>
+                    ) : (
+                      onAssignSeller ? (
+                        <button
+                          onClick={() => onAssignSeller(sale)}
+                          className="text-xs text-neutral-400 hover:text-brand-orange flex items-center gap-1 font-medium"
+                        >
+                          <UserCheck size={13} />
+                          <span>Asignar</span>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-neutral-400">Directa</span>
+                      )
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right font-bold text-neutral-900">
                     ${(sale.total || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => onViewInvoice(sale)}
-                      className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"
-                      title="Ver Factura X / Recibo"
-                    >
-                      <FileText size={18} />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      {onAssignSeller && (
+                        <button
+                          onClick={() => onAssignSeller(sale)}
+                          className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"
+                          title="Asignar o editar vendedor"
+                        >
+                          <UserCheck size={18} />
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => onViewInvoice(sale)}
+                        className="p-2 text-neutral-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-all"
+                        title="Ver Factura X / Recibo"
+                      >
+                        <FileText size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

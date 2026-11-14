@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   ShoppingCart, 
@@ -8,16 +8,24 @@ import {
   CreditCard, 
   Building, 
   Copy, 
-  Check 
+  Check,
+  Sparkles,
+  Layers
 } from 'lucide-react';
-import { Product } from '../types';
+import { Product, ProductPlan } from '../types';
+import { notificationService } from '../services/notificationService';
 
 interface PurchaseModalProps {
   product: Product | null;
+  selectedPlan?: ProductPlan | null;
   onClose: () => void;
 }
 
-export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }) => {
+export const PurchaseModal: React.FC<PurchaseModalProps> = ({ 
+  product, 
+  selectedPlan, 
+  onClose 
+}) => {
   const [buyPaymentMethod, setBuyPaymentMethod] = useState<'whatsapp' | 'transfer' | 'invoice'>('whatsapp');
   const [copiedBankField, setCopiedBankField] = useState<string | null>(null);
   const [orderName, setOrderName] = useState('');
@@ -25,7 +33,29 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
   const [orderEmail, setOrderEmail] = useState('');
   const [orderCompany, setOrderCompany] = useState('');
 
+  const [currentPlan, setCurrentPlan] = useState<ProductPlan | null>(() => {
+    if (selectedPlan) return selectedPlan;
+    if (product?.plans && product.plans.length > 0) {
+      return product.plans.find(p => p.isPopular) || product.plans[0];
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (selectedPlan) {
+      setCurrentPlan(selectedPlan);
+    } else if (product?.plans && product.plans.length > 0) {
+      setCurrentPlan(product.plans.find(p => p.isPopular) || product.plans[0]);
+    } else {
+      setCurrentPlan(null);
+    }
+  }, [selectedPlan, product]);
+
   if (!product) return null;
+
+  const effectivePrice = currentPlan ? currentPlan.price : product.price;
+  const planName = currentPlan ? currentPlan.name : null;
+  const hasPlans = Boolean(product.plans && product.plans.length > 0);
 
   const handleCopyBank = async (text: string, keyName: string) => {
     try {
@@ -37,13 +67,22 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
     }
   };
 
-  const handleBuyWhatsApp = (app: Product, extraDetails?: string) => {
-    const subText = app.hasSubscription && app.subscriptionPrice 
+  const handleBuyWhatsApp = (app: Product, extraDetails?: string, customChannel?: string) => {
+    const planTag = planName ? ` (Plan: ${planName})` : '';
+    notificationService.addPurchaseNotification({
+      productName: `${app.name}${planTag}`,
+      amount: effectivePrice,
+      clientName: orderName ? `${orderName}${orderCompany ? ` (${orderCompany})` : ''}` : 'Cliente Web',
+      phone: orderPhone || undefined,
+      channel: customChannel || 'WhatsApp / Web'
+    });
+
+    const subText = !currentPlan && app.hasSubscription && app.subscriptionPrice 
       ? ` (+ Mantenimiento: $${app.subscriptionPrice.toLocaleString()} / ${app.subscriptionPeriod || 'Mensual'})` 
       : '';
     const details = extraDetails ? `\n\nMis datos:\n${extraDetails}` : '';
     const text = encodeURIComponent(
-      `¡Hola Nova AJ! Quiero comprar la aplicación "${app.name}" (SKU: ${app.sku}) por $${app.price.toLocaleString()}${subText}.${details}\n\nPor favor, envíame los pasos para el pago, instalación y entrega del sistema.`
+      `¡Hola Nova AJ! Quiero comprar la aplicación "${app.name}"${planTag} (SKU: ${app.sku}) por $${effectivePrice.toLocaleString()}${subText}.${details}\n\nPor favor, envíame los pasos para el pago, instalación y entrega del sistema.`
     );
     window.open(`https://wa.me/5493815043132?text=${text}`, '_blank');
   };
@@ -55,9 +94,10 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
       orderCompany ? `• Empresa / Negocio: ${orderCompany}` : '',
       orderPhone ? `• Teléfono: ${orderPhone}` : '',
       orderEmail ? `• Email: ${orderEmail}` : '',
+      planName ? `• Plan Seleccionado: ${planName} ($${effectivePrice.toLocaleString()})` : '',
     ].filter(Boolean).join('\n');
 
-    handleBuyWhatsApp(product, clientDetails);
+    handleBuyWhatsApp(product, clientDetails, 'Formulario Oficial de Compra');
     onClose();
   };
 
@@ -105,18 +145,85 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
           </button>
         </div>
 
+        {/* 3 Tiered Plans Selector (if configured) */}
+        {hasPlans && product.plans && (
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-neutral-600 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers size={14} className="text-brand-orange" />
+                Elige tu Plan:
+              </span>
+              {currentPlan?.badge && (
+                <span className="px-2 py-0.5 bg-orange-100 text-brand-orange text-[10px] font-bold rounded-full">
+                  {currentPlan.badge}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {product.plans.map((p) => {
+                const isSelected = currentPlan?.id === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setCurrentPlan(p)}
+                    className={`p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                      isSelected
+                        ? 'border-brand-orange bg-orange-50/70 ring-2 ring-brand-orange/30 shadow-sm'
+                        : 'border-neutral-200 bg-neutral-50/50 hover:bg-white hover:border-neutral-300'
+                    }`}
+                  >
+                    {p.isPopular && (
+                      <span className="absolute -top-2 right-2 px-1.5 py-0.5 bg-brand-orange text-white text-[9px] font-black rounded-full shadow-xs">
+                        TOP
+                      </span>
+                    )}
+                    <div>
+                      <div className={`font-bold text-xs truncate ${isSelected ? 'text-brand-orange' : 'text-neutral-800'}`}>
+                        {p.name}
+                      </div>
+                      <div className="text-xs text-neutral-400 truncate mt-0.5">
+                        {p.period || 'Pago único'}
+                      </div>
+                    </div>
+                    <div className="text-sm font-black text-neutral-900 mt-2">
+                      ${p.price.toLocaleString()}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Price Box */}
         <div className="p-4 bg-gradient-to-br from-orange-50/70 via-amber-50/40 to-neutral-50 rounded-2xl border border-orange-200/80 mb-5">
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-2">
-            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Inversión Total del Sistema</span>
-            <div className="text-left sm:text-right">
+            <div>
+              <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                {currentPlan ? `Inversión - ${currentPlan.name}` : 'Inversión Total del Sistema'}
+              </span>
+              {currentPlan?.description && (
+                <p className="text-[11px] text-neutral-600 mt-0.5 line-clamp-2">
+                  {currentPlan.description}
+                </p>
+              )}
+            </div>
+            <div className="text-left sm:text-right mt-1 sm:mt-0">
               <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-                ${product.price.toLocaleString()}
+                ${effectivePrice.toLocaleString()}
               </span>
               <span className="text-xs text-neutral-500 font-semibold ml-1">ARS</span>
+              {currentPlan?.period && (
+                <span className="block text-[10px] text-neutral-400 font-medium">
+                  {currentPlan.period}
+                </span>
+              )}
             </div>
           </div>
-          {product.hasSubscription && product.subscriptionPrice ? (
+
+          {!currentPlan && product.hasSubscription && product.subscriptionPrice ? (
             <div className="text-xs font-bold text-brand-orange bg-white px-2.5 py-1 rounded-lg border border-orange-100 inline-block mb-3">
               + ${product.subscriptionPrice.toLocaleString()} / {product.subscriptionPeriod || 'Mensual'} (Mantenimiento, soporte y actualizaciones)
             </div>
@@ -124,22 +231,33 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
 
           {/* What is included */}
           <div className="space-y-1.5 pt-2 border-t border-orange-200/50 text-xs text-neutral-700 font-medium">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-              <span>Licencia de uso del sistema y configuración inicial completa</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-              <span>Credenciales privadas de Administrador y Creador</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-              <span>Base de datos en la nube y acceso multidispositivo (PC, Tablet y Móvil)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-              <span>Capacitación y soporte post-instalación de Nova AJ</span>
-            </div>
+            {currentPlan && currentPlan.features && currentPlan.features.length > 0 ? (
+              currentPlan.features.map((feat, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <span>{feat}</span>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                  <span>Licencia de uso del sistema y configuración inicial completa</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                  <span>Credenciales privadas de Administrador y Creador</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                  <span>Base de datos en la nube y acceso multidispositivo (PC, Tablet y Móvil)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                  <span>Capacitación y soporte post-instalación de Nova AJ</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -191,7 +309,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-5 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 text-sm"
             >
               <MessageCircle size={18} />
-              <span>Comprar por WhatsApp (${product.price.toLocaleString()})</span>
+              <span>Comprar por WhatsApp (${effectivePrice.toLocaleString()})</span>
             </button>
           </div>
         )}
@@ -200,7 +318,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
         {buyPaymentMethod === 'transfer' && (
           <div className="space-y-3">
             <p className="text-xs text-neutral-600 font-medium">
-              Realiza la transferencia por el importe de <strong>${product.price.toLocaleString()}</strong> a los siguientes datos:
+              Realiza la transferencia por el importe de <strong>${effectivePrice.toLocaleString()}</strong> a los siguientes datos:
             </p>
 
             <div className="bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/80 space-y-2.5 text-xs">
@@ -248,7 +366,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ product, onClose }
 
             <button
               type="button"
-              onClick={() => handleBuyWhatsApp(product, 'He realizado o deseo confirmar la transferencia bancaria por este sistema.')}
+              onClick={() => handleBuyWhatsApp(product, 'He realizado o deseo confirmar la transferencia bancaria por este sistema.', 'Transferencia Bancaria')}
               className="w-full bg-brand-orange hover:bg-orange-600 text-white font-bold py-3.5 px-5 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-orange/20 active:scale-95 text-sm"
             >
               <MessageCircle size={18} />

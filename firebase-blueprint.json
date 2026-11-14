@@ -50,18 +50,40 @@
     },
     "sales": {
       "title": "Sales Records",
-      "description": "Sales and transactions history",
+      "description": "Sales and transactions history with seller commissions",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
         "clientId": { "type": "string" },
         "clientName": { "type": "string" },
         "totalAmount": { "type": "number" },
+        "total": { "type": "number" },
         "date": { "type": "string" },
         "status": { "type": "string" },
-        "items": { "type": "array" }
+        "items": { "type": "array" },
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "commissionRate": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "commissionPaid": { "type": "boolean" }
       },
-      "required": ["clientId", "totalAmount"]
+      "required": ["clientId"]
+    },
+    "sellers": {
+      "title": "Sellers",
+      "description": "Salespeople team members and their default commission percentages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "commissionRate": { "type": "number" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "commissionRate"]
     },
     "subscriptions": {
       "title": "Subscriptions",

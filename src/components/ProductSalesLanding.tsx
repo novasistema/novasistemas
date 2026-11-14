@@ -36,12 +36,14 @@ import {
   TrendingUp,
   AlertCircle
 } from 'lucide-react';
-import { Product } from '../types';
+import { Product, ProductPlan } from '../types';
+import { notificationService } from '../services/notificationService';
+import { NovaAjLogo } from './NovaAjLogo';
 
 interface ProductSalesLandingProps {
   product: Product;
   onBack: () => void;
-  onBuy: (product: Product) => void;
+  onBuy: (product: Product, plan?: ProductPlan) => void;
   onAdminClick?: () => void;
 }
 
@@ -83,6 +85,13 @@ export const ProductSalesLanding: React.FC<ProductSalesLandingProps> = ({
   };
 
   const handleWhatsAppInquiry = () => {
+    notificationService.addPurchaseNotification({
+      productName: product.name,
+      amount: product.price,
+      clientName: 'Interesado desde Campaña Redes',
+      channel: 'Página de Venta / WhatsApp'
+    });
+
     const subText = product.hasSubscription && product.subscriptionPrice 
       ? ` (+ Abono: $${product.subscriptionPrice.toLocaleString()} / ${product.subscriptionPeriod || 'Mensual'})` 
       : '';
@@ -174,14 +183,7 @@ export const ProductSalesLanding: React.FC<ProductSalesLandingProps> = ({
               <span className="hidden sm:inline">Volver al Catálogo</span>
             </button>
             <div className="h-6 w-px bg-neutral-800 hidden sm:block" />
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-brand-orange rounded-xl flex items-center justify-center text-white font-extrabold shadow-md shadow-brand-orange/30">
-                N
-              </div>
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-white hidden md:inline">
-                Nova AJ <span className="text-brand-orange text-xs font-normal">| Apps</span>
-              </span>
-            </div>
+            <NovaAjLogo variant="horizontal" size="sm" />
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
@@ -876,112 +878,200 @@ export const ProductSalesLanding: React.FC<ProductSalesLandingProps> = ({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              
-              {/* Option 1: Licencia Completa */}
-              <div className="bg-neutral-800/80 p-8 rounded-3xl border border-neutral-700 space-y-6 flex flex-col justify-between">
-                <div>
-                  <span className="px-3 py-1 bg-neutral-700 text-neutral-300 text-xs font-bold rounded-full uppercase">
-                    Licencia Única
-                  </span>
-                  <h3 className="text-2xl font-bold text-white mt-3">Compra Definitiva</h3>
-                  <p className="text-xs text-neutral-400 mt-1">El sistema pasa a ser tuyo con entrega completa.</p>
-                  
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-4xl font-black text-white">${product.price.toLocaleString()}</span>
-                    <span className="text-neutral-400 font-semibold text-xs">ARS (pago único)</span>
-                  </div>
+            {product.plans && product.plans.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                {product.plans.map((plan, pIdx) => {
+                  const isHigh = plan.isPopular || pIdx === 1;
+                  return (
+                    <div
+                      key={plan.id || pIdx}
+                      className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 relative ${
+                        isHigh
+                          ? 'bg-gradient-to-b from-neutral-800 via-neutral-850 to-neutral-900 border-2 border-brand-orange shadow-2xl shadow-brand-orange/20 md:-translate-y-2'
+                          : 'bg-neutral-800/80 border border-neutral-700/80 hover:border-neutral-600'
+                      }`}
+                    >
+                      {isHigh && (
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-lg">
+                          {plan.badge || '⭐ Opción Más Elegida'}
+                        </div>
+                      )}
 
-                  <ul className="mt-6 space-y-3 text-xs text-neutral-300">
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Licencia perpetua de la aplicación</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Entrega de accesos Admin y Creador</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Código listo en Vercel y GitHub</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Soporte inicial de configuración y arranque</span>
-                    </li>
-                  </ul>
-                </div>
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${
+                            isHigh ? 'bg-brand-orange/20 text-brand-orange' : 'bg-neutral-700/80 text-neutral-300'
+                          }`}>
+                            {plan.badge || `Plan ${pIdx + 1}`}
+                          </span>
+                          <span className="text-[11px] text-neutral-400 font-medium">
+                            {plan.period || 'Pago Único'}
+                          </span>
+                        </div>
 
-                <button
-                  onClick={() => onBuy(product)}
-                  className="w-full bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3.5 px-4 rounded-xl transition-all text-sm"
-                >
-                  Comprar Licencia (${product.price.toLocaleString()})
-                </button>
-              </div>
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mt-3">
+                          {plan.name}
+                        </h3>
 
-              {/* Option 2: Con Mantenimiento Premium */}
-              <div className="bg-gradient-to-b from-neutral-800 via-neutral-850 to-neutral-900 p-8 rounded-3xl border-2 border-brand-orange space-y-6 flex flex-col justify-between relative shadow-2xl shadow-brand-orange/10">
-                <div className="absolute -top-3.5 right-6 bg-brand-orange text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow">
-                  Recomendado para Empresas
-                </div>
+                        {plan.description && (
+                          <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                            {plan.description}
+                          </p>
+                        )}
 
-                <div>
-                  <span className="px-3 py-1 bg-brand-orange/20 text-brand-orange text-xs font-bold rounded-full uppercase">
-                    Llave en Mano con Soporte
-                  </span>
-                  <h3 className="text-2xl font-bold text-white mt-3">Plan Todo Incluido</h3>
-                  <p className="text-xs text-neutral-400 mt-1">Servidor en la nube, soporte prioritario y actualizaciones.</p>
-                  
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-black text-white">${product.price.toLocaleString()}</span>
-                      <span className="text-neutral-400 font-semibold text-xs">ARS</span>
+                        <div className="mt-5 pb-5 border-b border-neutral-700/60">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-3xl sm:text-4xl font-black text-white">
+                              ${plan.price.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-neutral-400 font-semibold uppercase">
+                              ARS
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-emerald-400 font-medium block mt-1">
+                            ✓ Entrega inmediata con soporte
+                          </span>
+                        </div>
+
+                        <div className="mt-5 space-y-2.5">
+                          <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">
+                            Lo que incluye:
+                          </span>
+                          <ul className="space-y-2 text-xs text-neutral-300">
+                            {(plan.features || []).map((feat, fIdx) => (
+                              <li key={fIdx} className="flex items-start gap-2">
+                                <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 mt-6 border-t border-neutral-700/50">
+                        <button
+                          type="button"
+                          onClick={() => onBuy(product, plan)}
+                          className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-95 ${
+                            isHigh
+                              ? 'bg-gradient-to-r from-brand-orange to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg shadow-brand-orange/30'
+                              : 'bg-neutral-700 hover:bg-neutral-600 text-white'
+                          }`}
+                        >
+                          <ShoppingCart size={16} />
+                          <span>Elegir {plan.name}</span>
+                        </button>
+                      </div>
                     </div>
-                    {product.hasSubscription && product.subscriptionPrice ? (
-                      <div className="text-xs font-bold text-brand-orange mt-1">
-                        + ${product.subscriptionPrice.toLocaleString()} / {product.subscriptionPeriod || 'Mensual'}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-emerald-400 font-medium mt-1">
-                        Soporte continuo personalizado
-                      </div>
-                    )}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                {/* Option 1: Licencia Completa */}
+                <div className="bg-neutral-800/80 p-8 rounded-3xl border border-neutral-700 space-y-6 flex flex-col justify-between">
+                  <div>
+                    <span className="px-3 py-1 bg-neutral-700 text-neutral-300 text-xs font-bold rounded-full uppercase">
+                      Licencia Única
+                    </span>
+                    <h3 className="text-2xl font-bold text-white mt-3">Compra Definitiva</h3>
+                    <p className="text-xs text-neutral-400 mt-1">El sistema pasa a ser tuyo con entrega completa.</p>
+                    
+                    <div className="mt-4 flex items-baseline gap-2">
+                      <span className="text-4xl font-black text-white">${product.price.toLocaleString()}</span>
+                      <span className="text-neutral-400 font-semibold text-xs">ARS (pago único)</span>
+                    </div>
+
+                    <ul className="mt-6 space-y-3 text-xs text-neutral-300">
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Licencia perpetua de la aplicación</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Entrega de accesos Admin y Creador</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Código listo en Vercel y GitHub</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Soporte inicial de configuración y arranque</span>
+                      </li>
+                    </ul>
                   </div>
 
-                  <ul className="mt-6 space-y-3 text-xs text-neutral-200">
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Todo lo incluido en la Licencia Completa</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Servidor cloud 24/7 sin caídas con SSL</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Copias de seguridad automáticas diarias</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Línea directa WhatsApp para resolución de dudas</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check size={15} className="text-emerald-400 shrink-0" />
-                      <span>Actualizaciones continuas y mejoras</span>
-                    </li>
-                  </ul>
+                  <button
+                    onClick={() => onBuy(product)}
+                    className="w-full bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3.5 px-4 rounded-xl transition-all text-sm"
+                  >
+                    Comprar Licencia (${product.price.toLocaleString()})
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => onBuy(product)}
-                  className="w-full bg-gradient-to-r from-brand-orange to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black py-4 px-4 rounded-xl transition-all shadow-lg shadow-brand-orange/30 text-sm active:scale-95"
-                >
-                  Adquirir Plan Completo
-                </button>
-              </div>
+                {/* Option 2: Con Mantenimiento Premium */}
+                <div className="bg-gradient-to-b from-neutral-800 via-neutral-850 to-neutral-900 p-8 rounded-3xl border-2 border-brand-orange space-y-6 flex flex-col justify-between relative shadow-2xl shadow-brand-orange/10">
+                  <div className="absolute -top-3.5 right-6 bg-brand-orange text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow">
+                    Recomendado para Empresas
+                  </div>
 
-            </div>
+                  <div>
+                    <span className="px-3 py-1 bg-brand-orange/20 text-brand-orange text-xs font-bold rounded-full uppercase">
+                      Llave en Mano con Soporte
+                    </span>
+                    <h3 className="text-2xl font-bold text-white mt-3">Plan Todo Incluido</h3>
+                    <p className="text-xs text-neutral-400 mt-1">Servidor en la nube, soporte prioritario y actualizaciones.</p>
+                    
+                    <div className="mt-4">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-black text-white">${product.price.toLocaleString()}</span>
+                        <span className="text-neutral-400 font-semibold text-xs">ARS</span>
+                      </div>
+                      {product.hasSubscription && product.subscriptionPrice ? (
+                        <div className="text-xs font-bold text-brand-orange mt-1">
+                          + ${product.subscriptionPrice.toLocaleString()} / {product.subscriptionPeriod || 'Mensual'}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-emerald-400 font-medium mt-1">
+                          Soporte continuo personalizado
+                        </div>
+                      )}
+                    </div>
+
+                    <ul className="mt-6 space-y-3 text-xs text-neutral-200">
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Todo lo incluido en la Licencia Completa</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Servidor cloud 24/7 sin caídas con SSL</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Copias de seguridad automáticas diarias</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Línea directa WhatsApp para resolución de dudas</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={15} className="text-emerald-400 shrink-0" />
+                        <span>Actualizaciones continuas y mejoras</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => onBuy(product)}
+                    className="w-full bg-gradient-to-r from-brand-orange to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black py-4 px-4 rounded-xl transition-all shadow-lg shadow-brand-orange/30 text-sm active:scale-95"
+                  >
+                    Adquirir Plan Completo
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

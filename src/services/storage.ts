@@ -1,4 +1,4 @@
-import { Client, Product, Sale, Banner, Subscription } from '../types';
+import { Client, Product, Sale, Banner, Subscription, Seller } from '../types';
 import { db } from '../lib/firebase';
 import { 
   collection, 
@@ -25,6 +25,22 @@ const deduplicateById = <T extends { id?: string }>(items: T[]): T[] => {
     }
   });
   return result;
+};
+
+const stripUndefined = <T,>(obj: T): T => {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => stripUndefined(item)) as unknown as T;
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(obj as Record<string, unknown>).forEach(([key, value]) => {
+      if (value !== undefined) {
+        cleaned[key] = stripUndefined(value);
+      }
+    });
+    return cleaned as T;
+  }
+  return obj;
 };
 
 // Default seed data
@@ -246,6 +262,11 @@ export const storageService = {
               githubRepo: data.githubRepo !== undefined ? data.githubRepo : seed.githubRepo,
               vercelProject: data.vercelProject !== undefined ? data.vercelProject : seed.vercelProject,
               aiStudioAccount: data.aiStudioAccount !== undefined ? data.aiStudioAccount : seed.aiStudioAccount,
+              plans: data.plans !== undefined ? data.plans : seed.plans,
+              tagline: data.tagline !== undefined ? data.tagline : seed.tagline,
+              badge: data.badge !== undefined ? data.badge : seed.badge,
+              originalPrice: data.originalPrice !== undefined ? data.originalPrice : seed.originalPrice,
+              targetAudience: data.targetAudience !== undefined ? data.targetAudience : seed.targetAudience,
             };
           }
           return data;
@@ -273,7 +294,7 @@ export const storageService = {
       });
       // Save/update doc
       products.forEach(p => {
-        batch.set(doc(db, 'products', p.id), p);
+        batch.set(doc(db, 'products', p.id), stripUndefined(p));
       });
       await batch.commit();
     } catch (e) {
@@ -312,7 +333,7 @@ export const storageService = {
         }
       });
       clients.forEach(c => {
-        batch.set(doc(db, 'clients', c.id), c);
+        batch.set(doc(db, 'clients', c.id), stripUndefined(c));
       });
       await batch.commit();
     } catch (e) {
@@ -345,11 +366,43 @@ export const storageService = {
         }
       });
       sales.forEach(s => {
-        batch.set(doc(db, 'sales', s.id), s);
+        batch.set(doc(db, 'sales', s.id), stripUndefined(s));
       });
       await batch.commit();
     } catch (e) {
       console.error('Error saving sales to Firestore:', e);
+    }
+  },
+
+  subscribeSellers: (callback: (sellers: Seller[]) => void) => {
+    const colRef = collection(db, 'sellers');
+    return onSnapshot(colRef, (snapshot) => {
+      const items = snapshot.docs.map(docSnap => docSnap.data() as Seller);
+      items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      callback(deduplicateById(items));
+    }, (error) => {
+      console.error('Firestore sellers error:', error);
+    });
+  },
+
+  saveSellers: async (sellers: Seller[]) => {
+    try {
+      const snap = await getDocs(collection(db, 'sellers'));
+      const existingIds = new Set(snap.docs.map(d => d.id));
+      const currentIds = new Set(sellers.map(s => s.id));
+
+      const batch = writeBatch(db);
+      existingIds.forEach(id => {
+        if (!currentIds.has(id)) {
+          batch.delete(doc(db, 'sellers', id));
+        }
+      });
+      sellers.forEach(s => {
+        batch.set(doc(db, 'sellers', s.id), stripUndefined(s));
+      });
+      await batch.commit();
+    } catch (e) {
+      console.error('Error saving sellers to Firestore:', e);
     }
   },
 
@@ -384,7 +437,7 @@ export const storageService = {
         }
       });
       banners.forEach(b => {
-        batch.set(doc(db, 'banners', b.id), b);
+        batch.set(doc(db, 'banners', b.id), stripUndefined(b));
       });
       await batch.commit();
     } catch (e) {
@@ -424,7 +477,7 @@ export const storageService = {
         }
       });
       subscriptions.forEach(s => {
-        batch.set(doc(db, 'subscriptions', s.id), s);
+        batch.set(doc(db, 'subscriptions', s.id), stripUndefined(s));
       });
       await batch.commit();
     } catch (e) {

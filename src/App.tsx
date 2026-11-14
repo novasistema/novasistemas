@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Client, Product, Sale, View, SaleItem, Banner, Subscription } from './types';
+import { Client, Product, ProductPlan, Sale, Seller, View, SaleItem, Banner, Subscription, AppNotification } from './types';
 import { storageService } from './services/storage';
+import { notificationService } from './services/notificationService';
 
 // Components
 import { LandingView } from './components/LandingView';
@@ -14,18 +15,21 @@ import {
   BannersView 
 } from './components/AdminViews';
 import { SubscriptionsView } from './components/SubscriptionsView';
+import { SellersView } from './components/SellersView';
 import { 
   ClientModal, 
   ProductModal, 
   SaleModal, 
   BannerModal 
 } from './components/Modals';
+import { SellerModal, AssignSellerModal } from './components/SellerModal';
 import { SubscriptionModal } from './components/SubscriptionModal';
 import { InvoiceModal } from './components/InvoiceModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { ProductSalesLanding } from './components/ProductSalesLanding';
 import { PurchaseModal } from './components/PurchaseModal';
+import { NotificationCenter } from './components/NotificationCenter';
 
 export default function App() {
   const [view, setView] = useState<View>('landing');
@@ -33,13 +37,18 @@ export default function App() {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
+  // Notifications state
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
   // Selected product for full public sales landing page (e.g. from Facebook Ads or portfolio)
   const [selectedProductForSales, setSelectedProductForSales] = useState<Product | null>(null);
   const [buyingProduct, setBuyingProduct] = useState<Product | null>(null);
+  const [buyingPlan, setBuyingPlan] = useState<ProductPlan | null>(null);
 
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   
@@ -47,15 +56,18 @@ export default function App() {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
+  const [isSellerModalOpen, setIsSellerModalOpen] = useState(false);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingSeller, setEditingSeller] = useState<Seller | null>(null);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [assigningSellerSale, setAssigningSellerSale] = useState<Sale | null>(null);
 
   // Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,15 +117,19 @@ export default function App() {
     const unsubProducts = storageService.subscribeProducts(setProducts);
     const unsubClients = storageService.subscribeClients(setClients);
     const unsubSales = storageService.subscribeSales(setSales);
+    const unsubSellers = storageService.subscribeSellers(setSellers);
     const unsubBanners = storageService.subscribeBanners(setBanners);
     const unsubSubs = storageService.subscribeSubscriptions(setSubscriptions);
+    const unsubNotifs = notificationService.subscribeNotifications(setNotifications);
 
     return () => {
       unsubProducts();
       unsubClients();
       unsubSales();
+      unsubSellers();
       unsubBanners();
       unsubSubs();
+      if (typeof unsubNotifs === 'function') unsubNotifs();
     };
   }, []);
 
@@ -188,6 +204,18 @@ export default function App() {
       badge: (formData.get('badge') as string || '').trim(),
       originalPrice: formData.get('originalPrice') ? Number(formData.get('originalPrice')) : undefined,
       targetAudience: (formData.get('targetAudience') as string || '').trim(),
+      plans: (() => {
+        try {
+          const raw = formData.get('plans') as string;
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+        return editingProduct?.plans;
+      })(),
     };
 
     let updatedProducts;
@@ -211,8 +239,22 @@ export default function App() {
     }
   };
 
+  const handleToggleProductVisibility = (id: string) => {
+    const updated = products.map(p =>
+      p.id === id ? { ...p, inPortfolio: p.inPortfolio === false ? true : false } : p
+    );
+    storageService.saveProducts(updated);
+    setProducts(updated);
+    if (selectedProductForSales?.id === id) {
+      const refreshed = updated.find(p => p.id === id) || null;
+      setSelectedProductForSales(refreshed);
+    }
+  };
+
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [selectedSellerId, setSelectedSellerId] = useState('');
+  const [saleCommissionRate, setSaleCommissionRate] = useState<number>(0);
 
   const handleAddSaleItem = (productId: string) => {
     const product = products.find(p => p.id === productId);
@@ -237,6 +279,14 @@ export default function App() {
     }
   };
 
+  const handleUpdateSaleItemPrice = (productId: string, newPrice: number) => {
+    setSaleItems(saleItems.map(item =>
+      item.productId === productId
+        ? { ...item, price: newPrice, total: item.quantity * newPrice }
+        : item
+    ));
+  };
+
   const handleRemoveSaleItem = (productId: string) => {
     setSaleItems(saleItems.filter(item => item.productId !== productId));
   };
@@ -248,13 +298,24 @@ export default function App() {
     if (!client) return;
 
     const total = saleItems.reduce((acc, item) => acc + item.total, 0);
+    const seller = sellers.find(s => s.id === selectedSellerId);
+    const effRate = seller ? (Number(saleCommissionRate) || 0) : 0;
+    const effCommission = seller ? Math.round((total * effRate) / 100) : 0;
+
     const newSale: Sale = {
       id: Date.now().toString(),
       clientId: client.id,
       clientName: client.name,
       items: saleItems,
       total,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      ...(seller ? {
+        sellerId: seller.id,
+        sellerName: seller.name,
+        commissionRate: effRate,
+        commissionAmount: effCommission,
+        commissionPaid: false,
+      } : {})
     };
 
     // Update stock
@@ -275,6 +336,80 @@ export default function App() {
     setIsSaleModalOpen(false);
     setSaleItems([]);
     setSelectedClientId('');
+    setSelectedSellerId('');
+    setSaleCommissionRate(0);
+
+    // Trigger purchase notification with chime
+    notificationService.addPurchaseNotification({
+      productName: saleItems.map(i => `${i.quantity}x ${i.productName}`).join(', '),
+      amount: total,
+      clientName: client.name,
+      phone: client.phone,
+      channel: seller ? `Vendedor: ${seller.name}` : 'Panel de Ventas'
+    });
+  };
+
+  const handleSaveSeller = (sellerData: Seller) => {
+    let updatedSellers: Seller[];
+    if (editingSeller) {
+      updatedSellers = sellers.map(s => s.id === editingSeller.id ? sellerData : s);
+    } else {
+      updatedSellers = [...sellers, sellerData];
+    }
+    storageService.saveSellers(updatedSellers);
+    setSellers(updatedSellers);
+    setIsSellerModalOpen(false);
+    setEditingSeller(null);
+  };
+
+  const handleDeleteSeller = (id: string) => {
+    if (confirm('¿Estás seguro de eliminar este vendedor? Sus ventas históricas conservarán el registro.')) {
+      const updated = sellers.filter(s => s.id !== id);
+      storageService.saveSellers(updated);
+      setSellers(updated);
+    }
+  };
+
+  const handleToggleCommissionPaid = (saleId: string) => {
+    const updatedSales = sales.map(s =>
+      s.id === saleId ? { ...s, commissionPaid: !s.commissionPaid } : s
+    );
+    storageService.saveSales(updatedSales);
+    setSales(updatedSales);
+  };
+
+  const handleAssignSellerToSale = (saleId: string, sellerId: string, commissionRate: number) => {
+    const seller = sellers.find(s => s.id === sellerId);
+    const updatedSales = sales.map(s => {
+      if (s.id !== saleId) return s;
+      if (!sellerId || !seller) {
+        const { sellerId: _a, sellerName: _b, commissionRate: _c, commissionAmount: _d, commissionPaid: _e, ...rest } = s;
+        return rest;
+      }
+      const rate = Math.max(0, Math.min(100, Number(commissionRate) || 0));
+      return {
+        ...s,
+        sellerId: seller.id,
+        sellerName: seller.name,
+        commissionRate: rate,
+        commissionAmount: Math.round(((s.total || 0) * rate) / 100),
+        commissionPaid: s.commissionPaid || false,
+      };
+    });
+    storageService.saveSales(updatedSales);
+    setSales(updatedSales);
+  };
+
+  const handleOpenSaleWithSeller = (sellerId?: string) => {
+    if (sellerId) {
+      const found = sellers.find(s => s.id === sellerId);
+      setSelectedSellerId(sellerId);
+      setSaleCommissionRate(found?.commissionRate ?? 15);
+    } else {
+      setSelectedSellerId('');
+      setSaleCommissionRate(0);
+    }
+    setIsSaleModalOpen(true);
   };
 
   const handleAddBanner = (e: React.FormEvent<HTMLFormElement>) => {
@@ -381,19 +516,76 @@ export default function App() {
   };
 
   if (selectedProductForSales) {
+    if (selectedProductForSales.inPortfolio === false && !isAdminAuthenticated) {
+      return (
+        <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-neutral-900 border border-white/10 rounded-3xl p-8 text-center space-y-5 shadow-2xl">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-brand-orange/15 text-brand-orange flex items-center justify-center font-bold text-2xl">
+              !
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Aplicación no disponible</h2>
+              <p className="text-sm text-neutral-400 mt-2">
+                Esta aplicación se encuentra temporalmente pausada u oculta en nuestro catálogo público.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSelectProductForSales(null)}
+              className="w-full py-3 px-5 rounded-xl bg-brand-orange hover:bg-orange-600 text-white font-bold text-sm transition-all"
+            >
+              Ver Aplicaciones Disponibles
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
+        {selectedProductForSales.inPortfolio === false && isAdminAuthenticated && (
+          <div className="bg-amber-500 text-neutral-950 px-4 py-2 text-xs font-bold flex items-center justify-center gap-3 z-[170] relative">
+            <span>Vista previa privada: esta aplicación está DESACTIVADA / OCULTA para el público.</span>
+            <button
+              type="button"
+              onClick={() => handleToggleProductVisibility(selectedProductForSales.id)}
+              className="px-2.5 py-1 bg-neutral-950 text-white rounded-lg hover:bg-neutral-800 transition-colors"
+            >
+              Activar y Mostrar en Web
+            </button>
+          </div>
+        )}
+        <div className="fixed top-4 right-4 z-[160]">
+          <NotificationCenter 
+            notifications={notifications}
+            onSelectSaleNotification={() => {
+              if (isAdminAuthenticated) {
+                handleSelectProductForSales(null);
+                setView('sales');
+              } else {
+                handleAdminClick();
+              }
+            }}
+          />
+        </div>
         <ProductSalesLanding 
           product={selectedProductForSales} 
           onBack={() => handleSelectProductForSales(null)} 
-          onBuy={(p) => setBuyingProduct(p)} 
+          onBuy={(p, plan) => {
+            setBuyingProduct(p);
+            setBuyingPlan(plan || null);
+          }} 
           onAdminClick={handleAdminClick} 
         />
         <AnimatePresence>
           {buyingProduct && (
             <PurchaseModal 
               product={buyingProduct} 
-              onClose={() => setBuyingProduct(null)} 
+              selectedPlan={buyingPlan}
+              onClose={() => {
+                setBuyingProduct(null);
+                setBuyingPlan(null);
+              }} 
             />
           )}
           <AdminLoginModal 
@@ -415,12 +607,17 @@ export default function App() {
           products={products}
           onAdminClick={handleAdminClick} 
           onViewProductSales={handleSelectProductForSales}
+          notifications={notifications}
         />
         <AnimatePresence>
           {buyingProduct && (
             <PurchaseModal 
               product={buyingProduct} 
-              onClose={() => setBuyingProduct(null)} 
+              selectedPlan={buyingPlan}
+              onClose={() => {
+                setBuyingProduct(null);
+                setBuyingPlan(null);
+              }} 
             />
           )}
           <AdminLoginModal 
@@ -442,7 +639,41 @@ export default function App() {
         onChangePassword={() => setIsChangePasswordOpen(true)}
       />
       
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 pt-24 lg:pt-8">
+      <main className="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-6">
+        {/* Admin Top Navigation & Notification Bar */}
+        <div className="flex items-center justify-between pb-4 mb-6 border-b border-neutral-200/70">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Panel Nova AJ</span>
+            <span className="text-neutral-300">/</span>
+            <span className="text-xs font-bold text-neutral-800">
+              {{
+                dashboard: 'Dashboard',
+                clients: 'Clientes',
+                products: 'Sistemas / Productos',
+                sales: 'Ventas',
+                sellers: 'Vendedores',
+                subscriptions: 'Suscripciones',
+                banners: 'Banners',
+                landing: 'Tienda'
+              }[view] || view}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setView('landing')}
+              className="text-xs font-semibold text-neutral-600 hover:text-brand-orange bg-white border border-neutral-200 px-3.5 py-2 rounded-xl transition-all shadow-sm hover:border-neutral-300 flex items-center gap-1.5"
+            >
+              Ir a la Tienda / Portafolio
+            </button>
+            <NotificationCenter 
+              notifications={notifications}
+              onSelectSaleNotification={() => setView('sales')}
+            />
+          </div>
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={`view-content-${view}`}
@@ -478,6 +709,7 @@ export default function App() {
                 setEditingProduct={setEditingProduct} 
                 setIsProductModalOpen={setIsProductModalOpen} 
                 handleDeleteProduct={handleDeleteProduct} 
+                handleToggleProductVisibility={handleToggleProductVisibility}
                 onViewSalesLanding={handleSelectProductForSales}
               />
             )}
@@ -485,6 +717,29 @@ export default function App() {
               <SalesView 
                 sales={sales} 
                 setIsSaleModalOpen={setIsSaleModalOpen} 
+                onViewInvoice={(sale) => {
+                  setSelectedSale(sale);
+                  setIsInvoiceModalOpen(true);
+                }}
+                onAssignSeller={(sale) => setAssigningSellerSale(sale)}
+              />
+            )}
+            {view === 'sellers' && (
+              <SellersView
+                sellers={sellers}
+                sales={sales}
+                onAddSeller={() => {
+                  setEditingSeller(null);
+                  setIsSellerModalOpen(true);
+                }}
+                onEditSeller={(seller) => {
+                  setEditingSeller(seller);
+                  setIsSellerModalOpen(true);
+                }}
+                onDeleteSeller={handleDeleteSeller}
+                onNewSaleForSeller={handleOpenSaleWithSeller}
+                onToggleCommissionPaid={handleToggleCommissionPaid}
+                onAssignSellerToSale={(sale) => setAssigningSellerSale(sale)}
                 onViewInvoice={(sale) => {
                   setSelectedSale(sale);
                   setIsInvoiceModalOpen(true);
@@ -534,12 +789,33 @@ export default function App() {
           onClose={() => setIsSaleModalOpen(false)} 
           clients={clients} 
           products={products} 
+          sellers={sellers}
           saleItems={saleItems} 
           selectedClientId={selectedClientId} 
           setSelectedClientId={setSelectedClientId} 
+          selectedSellerId={selectedSellerId}
+          setSelectedSellerId={setSelectedSellerId}
+          commissionRate={saleCommissionRate}
+          setCommissionRate={setSaleCommissionRate}
           onAddItem={handleAddSaleItem} 
+          onUpdateItemPrice={handleUpdateSaleItemPrice}
           onRemoveItem={handleRemoveSaleItem} 
           onComplete={handleCompleteSale} 
+        />
+        <SellerModal
+          isOpen={isSellerModalOpen}
+          onClose={() => {
+            setIsSellerModalOpen(false);
+            setEditingSeller(null);
+          }}
+          onSubmit={handleSaveSeller}
+          editingSeller={editingSeller}
+        />
+        <AssignSellerModal
+          sale={assigningSellerSale}
+          sellers={sellers}
+          onClose={() => setAssigningSellerSale(null)}
+          onSave={handleAssignSellerToSale}
         />
         <BannerModal 
           isOpen={isBannerModalOpen} 
@@ -568,7 +844,11 @@ export default function App() {
         {buyingProduct && (
           <PurchaseModal 
             product={buyingProduct} 
-            onClose={() => setBuyingProduct(null)} 
+            selectedPlan={buyingPlan}
+            onClose={() => {
+              setBuyingProduct(null);
+              setBuyingPlan(null);
+            }} 
           />
         )}
       </AnimatePresence>

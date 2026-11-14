@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Lock, Eye, EyeOff, X, ShieldAlert, ArrowRight, KeyRound, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Lock, Eye, EyeOff, X, ShieldAlert, ArrowRight, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { storageService } from '../services/storage';
+import { NovaAjLogo } from './NovaAjLogo';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ export const AdminLoginModal = ({ isOpen, onClose, onSuccess }: AdminLoginModalP
   const [error, setError] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryError, setRecoveryError] = useState('');
 
   if (!isOpen) return null;
 
@@ -31,15 +34,23 @@ export const AdminLoginModal = ({ isOpen, onClose, onSuccess }: AdminLoginModalP
     }
   };
 
-  const handleResetPassword = () => {
-    storageService.resetAdminPassword();
-    setPassword('admin123');
-    setError(false);
-    setConfirmReset(false);
-    setResetSuccess(true);
-    setTimeout(() => {
-      setResetSuccess(false);
-    }, 4000);
+  const handleVerifyAndReset = () => {
+    const cleanEmail = recoveryEmail.trim().toLowerCase();
+    // Authorized creator email
+    if (cleanEmail === 'ajnovasistemas@gmail.com') {
+      storageService.resetAdminPassword();
+      setPassword('admin123');
+      setError(false);
+      setConfirmReset(false);
+      setRecoveryEmail('');
+      setRecoveryError('');
+      setResetSuccess(true);
+      setTimeout(() => {
+        setResetSuccess(false);
+      }, 5000);
+    } else {
+      setRecoveryError('Correo no reconocido como administrador. Acceso denegado.');
+    }
   };
 
   return (
@@ -65,10 +76,11 @@ export const AdminLoginModal = ({ isOpen, onClose, onSuccess }: AdminLoginModalP
         </button>
 
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-16 h-16 bg-brand-orange/10 text-brand-orange rounded-2xl flex items-center justify-center mb-4 shadow-inner">
-            <Lock size={32} />
+          <NovaAjLogo variant="full" size="sm" className="mb-4" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-orange/10 text-brand-orange rounded-full text-xs font-bold mb-2">
+            <Lock size={14} />
+            <span>Acceso Privado</span>
           </div>
-          <h3 className="text-2xl font-bold text-neutral-900">Acceso Privado</h3>
           <p className="text-sm text-neutral-500 mt-1 max-w-xs">
             Ingresa la contraseña de administrador para ingresar al panel de control.
           </p>
@@ -82,7 +94,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onSuccess }: AdminLoginModalP
           >
             <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
             <div>
-              ¡Contraseña restablecida con éxito a: <strong className="font-mono font-bold text-emerald-950">admin123</strong>! Se ha autocompletado en el campo.
+              ¡Identidad de administrador confirmada! Contraseña restablecida con éxito. Haz clic en &quot;Ingresar al Panel&quot;.
             </div>
           </motion.div>
         )}
@@ -153,38 +165,52 @@ export const AdminLoginModal = ({ isOpen, onClose, onSuccess }: AdminLoginModalP
             <motion.div 
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-2 text-amber-900"
+              className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs space-y-3 text-neutral-800"
             >
-              <div className="font-bold flex items-center gap-1.5">
-                <RotateCcw size={14} className="text-amber-700" />
-                ¿Restablecer a la clave de fábrica?
+              <div className="font-bold flex items-center gap-1.5 text-neutral-900">
+                <RotateCcw size={14} className="text-brand-orange" />
+                Recuperación de Contraseña
               </div>
-              <p className="text-amber-800 leading-relaxed">
-                Esto restaurará la contraseña original: <strong className="font-mono text-neutral-900">admin123</strong>.
+              <p className="text-neutral-600 text-xs leading-relaxed">
+                Para verificar que eres el creador legítimo, ingresa tu correo de administrador:
               </p>
+              <div className="space-y-2">
+                <input
+                  type="email"
+                  value={recoveryEmail}
+                  onChange={(e) => {
+                    setRecoveryEmail(e.target.value);
+                    setRecoveryError('');
+                  }}
+                  placeholder="ejemplo@correo.com"
+                  className="input-field py-2 text-xs w-full bg-white"
+                />
+                {recoveryError && (
+                  <p className="text-red-600 text-[11px] font-semibold">{recoveryError}</p>
+                )}
+              </div>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={handleResetPassword}
-                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all"
+                  onClick={handleVerifyAndReset}
+                  className="px-3.5 py-2 bg-neutral-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow-sm transition-all"
                 >
-                  Sí, restablecer clave
+                  Verificar y Restablecer
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConfirmReset(false)}
-                  className="px-3 py-1.5 bg-white border border-amber-300 text-amber-800 rounded-lg text-xs hover:bg-amber-100 transition-all"
+                  onClick={() => {
+                    setConfirmReset(false);
+                    setRecoveryEmail('');
+                    setRecoveryError('');
+                  }}
+                  className="px-3 py-2 bg-white border border-neutral-300 text-neutral-700 rounded-xl text-xs hover:bg-neutral-100 transition-all"
                 >
                   Cancelar
                 </button>
               </div>
             </motion.div>
           )}
-
-          <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-100 text-xs text-neutral-500 flex items-center gap-2">
-            <KeyRound size={16} className="text-brand-orange shrink-0" />
-            <span>Clave predeterminada inicial: <strong className="font-mono text-neutral-800">admin123</strong></span>
-          </div>
 
           <div className="pt-2">
             <button 
